@@ -1,0 +1,60 @@
+<?php
+
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BahanBakuController;
+use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KasHarianController;
+use App\Http\Controllers\KeuanganController;
+use App\Http\Controllers\PembelianController;
+use App\Http\Controllers\PenjualanController;
+use App\Http\Controllers\ProdukController;
+use App\Http\Controllers\ProduksiController;
+use App\Http\Controllers\RekeningController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return view('login');
+});
+
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::middleware('auth')->group(function () {
+    
+    // Dashboard Routes
+Route::get('/admin/dashboard', [DashboardController::class, 'index'])
+    ->name('admin.dashboard');
+    Route::get('/staff/dashboard', function () {
+        return view('dashboard');
+    })->name('staff.dashboard');
+
+    Route::resource('users', UserController::class);
+    Route::resource('supplier', SupplierController::class);
+    Route::resource('bahan-baku', BahanBakuController::class);
+    Route::resource('produk', ProdukController::class);
+    Route::resource('client', ClientController::class);
+    Route::resource('rekening', RekeningController::class);
+    Route::resource('pembelian', PembelianController::class);
+    Route::post('/pembelian/{id}/bayar', [PembelianController::class, 'bayar'])->name('pembelian.bayar');
+    Route::resource('produksi', ProduksiController::class);
+    Route::get('produksi/{id}/repair', [ProduksiController::class, 'repair'])->name('produksi.repair');
+    Route::post('/produksi/{id}/update-status', [ProduksiController::class, 'updateStatus'])->name('produksi.update-status');
+    Route::get('/produksi/{id}/repair', [ProduksiController::class, 'repair'])->name('produksi.repair');
+    Route::post('/produksi/{id}/repair-store', [ProduksiController::class, 'repairStore'])->name('produksi.repair-store');
+    Route::resource('penjualan', PenjualanController::class);   
+    Route::get('penjualan/{id}', [PenjualanController::class, 'show'])->name('penjualan.show');
+    Route::post('penjualan/{id}/cancel', [PenjualanController::class, 'cancel'])->name('penjualan.cancel');
+    Route::post('penjualan/{id}/return', [PenjualanController::class, 'return'])->name('penjualan.return');
+    Route::get('penjualan/{id}/print', [PenjualanController::class, 'print'])->name('penjualan.print');
+    Route::get('penjualan/{id}/pdf', [PenjualanController::class, 'downloadPDF'])->name('penjualan.pdf');
+    Route::get('keuangan/kas', [KasHarianController::class, 'index'])->name('kas.index');
+    Route::post('keuangan/kas', [KasHarianController::class, 'store'])->name('kas.store');
+    Route::delete('keuangan/kas/{id}', [KasHarianController::class, 'destroy'])->name('kas.destroy');
+    Route::get('keuangan', [KeuanganController::class, 'index'])->name('keuangan.index');
+    Route::post('keuangan/transaksi', [KeuanganController::class, 'storeTransaksi'])->name('keuangan.storeTransaksi');
+    Route::post('keuangan/kash', [KeuanganController::class, 'storeKas'])->name('keuangan.storeKas');
+});
