@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('rekening', function (Blueprint $table) {
             $table->id();
-            $table->string('nama',100);
-            $table->enum('jenis',['kas','bank']);
-            $table->decimal('saldo_awal',15,2)->default(0);
-            $table->decimal('saldo_saat_ini',15,2)->default(0);
+            $table->string('nama', 100);
+            $table->enum('jenis', ['kas','bank']);
+            $table->decimal('saldo', 15, 2)->default(0); // 🔥 hanya 1 saldo
             $table->timestamps();
         });
     }

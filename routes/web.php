@@ -3,9 +3,11 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BahanBakuController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CompanyProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KasHarianController;
 use App\Http\Controllers\KeuanganController;
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PembelianController;
 use App\Http\Controllers\PenjualanController;
 use App\Http\Controllers\ProdukController;
@@ -57,4 +59,14 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
     Route::get('keuangan', [KeuanganController::class, 'index'])->name('keuangan.index');
     Route::post('keuangan/transaksi', [KeuanganController::class, 'storeTransaksi'])->name('keuangan.storeTransaksi');
     Route::post('keuangan/kash', [KeuanganController::class, 'storeKas'])->name('keuangan.storeKas');
+    Route::get('/konfigurasi', [CompanyProfileController::class, 'index'])->name('konfigurasi.index');
+    Route::post('/konfigurasi/update', [CompanyProfileController::class, 'update'])->name('konfigurasi.update');
+    Route::post('pembelian/{id}/cancel', [PembelianController::class, 'cancel'])->name('pembelian.cancel');
+    Route::get('pembelian/{id}/pdf', [PembelianController::class, 'cetakPDF'])->name('pembelian.pdf');
+    Route::delete('/produksi/{id}/cancel', [ProduksiController::class, 'cancel'])->name('produksi.cancel');
+    Route::put('/penjualan/{id}/cancel', [App\Http\Controllers\PenjualanController::class, 'cancel'])->name('penjualan.cancel');
+    Route::get('/laporan/penjualan', [LaporanController::class, 'penjualan'])->name('laporan.penjualan');
+    Route::get('/laporan/pembelian', [LaporanController::class, 'pembelian'])->name('laporan.pembelian');
+    Route::get('/laporan/penjualan/cetak', [LaporanController::class, 'cetakPenjualan'])->name('laporan.penjualan.cetak');
+Route::get('/laporan/pembelian/cetak', [LaporanController::class, 'cetakPembelian'])->name('laporan.pembelian.cetak');
 });

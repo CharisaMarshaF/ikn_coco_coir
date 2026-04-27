@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('kas_harian', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('rekening_id')->constrained('rekening')->cascadeOnDelete();
             $table->date('tanggal');
-            $table->enum('jenis',['masuk','keluar']);
-            $table->decimal('nominal',15,2);
+            $table->enum('jenis', ['masuk','keluar']);
+            $table->decimal('nominal', 15, 2);
             $table->text('keterangan')->nullable();
             $table->timestamps();
         });

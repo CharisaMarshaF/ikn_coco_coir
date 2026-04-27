@@ -9,6 +9,7 @@ class RekeningController extends Controller
 {
     public function index()
     {
+        // Menampilkan data terbaru dengan paginasi
         $rekening = Rekening::latest()->paginate(10);
         return view('admin.rekening', compact('rekening'));
     }
@@ -16,33 +17,37 @@ class RekeningController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama' => 'required|max:100',
+            'nama'  => 'required|max:100',
             'jenis' => 'required|in:kas,bank',
-            'saldo_awal' => 'required|numeric',
+            'saldo' => 'required|numeric|min:0',
         ]);
 
-        // Saat simpan pertama kali, saldo_saat_ini disamakan dengan saldo_awal
         Rekening::create([
-            'nama' => $request->nama,
+            'nama'  => $request->nama,
             'jenis' => $request->jenis,
-            'saldo_awal' => $request->saldo_awal,
-            'saldo_saat_ini' => $request->saldo_awal,
+            'saldo' => $request->saldo,
         ]);
 
-        return redirect()->back()->with('success', 'Rekening berhasil ditambahkan');
+        return redirect()->back()->with('success', 'Rekening berhasil ditambahkan dengan saldo awal.');
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
-            'nama' => 'required|max:100',
+            'nama'  => 'required|max:100',
             'jenis' => 'required|in:kas,bank',
+            // Saldo sengaja tidak divalidasi/dimasukkan di sini
         ]);
 
         $rekening = Rekening::findOrFail($id);
-        $rekening->update($request->only(['nama', 'jenis']));
+        
+        // Hanya update nama dan jenis saja
+        $rekening->update([
+            'nama'  => $request->nama,
+            'jenis' => $request->jenis,
+        ]);
 
-        return redirect()->back()->with('success', 'Rekening berhasil diperbarui');
+        return redirect()->back()->with('success', 'Informasi rekening berhasil diperbarui.');
     }
 
     public function destroy($id)
@@ -50,6 +55,6 @@ class RekeningController extends Controller
         $rekening = Rekening::findOrFail($id);
         $rekening->delete();
 
-        return redirect()->back()->with('success', 'Rekening berhasil dihapus');
+        return redirect()->back()->with('success', 'Rekening berhasil dihapus.');
     }
 }

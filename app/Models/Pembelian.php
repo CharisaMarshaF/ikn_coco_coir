@@ -32,4 +32,5 @@ class Pembelian extends Model
             ->where('keterangan', 'LIKE', "%{$search}%")
             ->first();
     }
+    
 }

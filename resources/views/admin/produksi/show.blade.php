@@ -4,9 +4,7 @@
 <div class="intro-y flex flex-col sm:flex-row items-center mt-8">
     <h2 class="text-lg font-medium mr-auto">Rincian Produksi</h2>
     <div class="w-full sm:w-auto flex mt-4 sm:mt-0 gap-2">
-        <button onclick="window.print()" class="btn btn-primary shadow-md">
-            <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Print
-        </button>
+       
         <a href="{{ route('produksi.index') }}" class="btn btn-secondary shadow-md">Kembali</a>
     </div>
 </div>
@@ -27,13 +25,16 @@
             </div>
             <div class="flex items-center mt-3 border-b border-slate-100 pb-5"> 
                 <i data-lucide="activity" class="w-4 h-4 text-slate-500 mr-2"></i> Status: 
-                @if($produksi->status == 'berhasil')
-                    <span class="bg-success/20 text-success rounded px-2 ml-1 text-xs font-medium">Berhasil & Update Stok</span>
-                @elseif($produksi->status == 'proses')
-                    <span class="bg-warning/20 text-warning rounded px-2 ml-1 text-xs font-medium">Sedang Proses</span>
-                @else
-                    <span class="bg-danger/20 text-danger rounded px-2 ml-1 text-xs font-medium">Reject / Gagal</span>
-                @endif
+                    @if($produksi->status == 'berhasil')
+                        <span class="bg-success/20 text-success rounded px-2 ml-1 text-xs font-medium">Berhasil & Update Stok</span>
+                    @elseif($produksi->status == 'proses')
+                        <span class="bg-warning/20 text-warning rounded px-2 ml-1 text-xs font-medium">Sedang Proses</span>
+                    @elseif($produksi->status == 'cancel')
+                        <span class="bg-danger/20 text-danger rounded px-2 ml-1 text-xs font-medium">Dibatalkan</span>
+                    @else
+                        <span class="bg-danger/20 text-danger rounded px-2 ml-1 text-xs font-medium">Reject / Gagal</span>
+                    @endif
+
             </div>
 
             @if($produksi->status == 'proses')

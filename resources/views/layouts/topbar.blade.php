@@ -1,18 +1,18 @@
 <!-- BEGIN: Top Bar -->
-                <div class="top-bar -mx-4 px-4 md:mx-0 md:px-0">
-                    <!-- BEGIN: Breadcrumb -->
-                    <nav aria-label="breadcrumb" class="-intro-x mr-auto hidden sm:flex">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="#">Application</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">IKN COCO COIR</li>
-                        </ol>
-                    </nav>
-                    <!-- END: Breadcrumb -->
-                    
-                    <!-- BEGIN: Notifications -->
-                    <div class="intro-x dropdown mr-auto sm:mr-6">
-                        {{-- <div class="dropdown-toggle notification notification--bullet cursor-pointer" role="button" aria-expanded="false" data-tw-toggle="dropdown"> <i data-lucide="bell" class="notification__icon dark:text-slate-500"></i> </div> --}}
-                        {{-- <div class="notification-content pt-2 dropdown-menu">
+<div class="top-bar -mx-4 px-4 md:mx-0 md:px-0">
+    <!-- BEGIN: Breadcrumb -->
+    <nav aria-label="breadcrumb" class="-intro-x mr-auto hidden sm:flex">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Application</a></li>
+            <li class="breadcrumb-item active" aria-current="page">IKN COCO COIR</li>
+        </ol>
+    </nav>
+    <!-- END: Breadcrumb -->
+
+    <!-- BEGIN: Notifications -->
+    <div class="intro-x dropdown mr-auto sm:mr-6">
+        {{-- <div class="dropdown-toggle notification notification--bullet cursor-pointer" role="button" aria-expanded="false" data-tw-toggle="dropdown"> <i data-lucide="bell" class="notification__icon dark:text-slate-500"></i> </div> --}}
+        {{-- <div class="notification-content pt-2 dropdown-menu">
                             <div class="notification-content__box dropdown-content">
                                 <div class="notification-content__title">Notifications</div>
                                 <div class="cursor-pointer relative flex items-center ">
@@ -31,38 +31,40 @@
                                 
                             </div>
                         </div> --}}
-                    </div>
-                    <!-- END: Notifications -->
-                    <!-- BEGIN: Account Menu -->
-                    <div class="intro-x dropdown w-8 h-8">
-                        <div class="dropdown-toggle w-8 h-8 rounded-full overflow-hidden shadow-lg image-fit zoom-in" role="button" aria-expanded="false" data-tw-toggle="dropdown">
-                            <img alt="Midone - HTML Admin Template" src="{{ asset('template/dist/images/profile-5.jpg') }}">
-                        </div>
-                        <div class="dropdown-menu w-56">
-                            <ul class="dropdown-content bg-primary text-white">
-                                <li class="p-2">
-                                    <div class="font-medium">{{ Auth::user()->name }}</div>
-                                    <div class="text-xs text-white/70 mt-0.5 dark:text-slate-500">{{ Auth::user()->role }}</div>
-                                </li>
-                                <li>
-                                    <hr class="dropdown-divider border-white/[0.08]">
-                                </li>
-                                
-                                <li>
-                                    <hr class="dropdown-divider border-white/[0.08]">
-                                </li>
-                                <li>
-<form method="POST" action="{{ route('logout') }}">
-    @csrf
-    <button type="submit" class="dropdown-item hover:bg-white/5 flex items-center">
-        <i data-lucide="toggle-right" class="w-4 h-4 mr-2"></i>
-        Logout
-    </button>
-</form>                                </li>
+    </div>
+    <!-- END: Notifications -->
+    <!-- BEGIN: Account Menu -->
+    <div class="intro-x dropdown w-8 h-8">
+        <div class="dropdown-toggle w-8 h-8 rounded-full overflow-hidden shadow-lg image-fit zoom-in" role="button"
+            aria-expanded="false" data-tw-toggle="dropdown">
+            <img alt="Midone - HTML Admin Template" src="{{ asset('template/pp.png') }}">
+        </div>
+        <div class="dropdown-menu w-56">
+            <ul class="dropdown-content bg-primary text-white">
+                <li class="p-2">
+                    <div class="font-medium">{{ Auth::user()->name }}</div>
+                    <div class="text-xs text-white/70 mt-0.5 dark:text-slate-500">{{ Auth::user()->role }}</div>
+                </li>
+                <li>
+                    <hr class="dropdown-divider border-white/[0.08]">
+                </li>
 
-                            </ul>
-                        </div>
-                    </div>
-                    <!-- END: Account Menu -->
-                </div>
-                <!-- END: Top Bar -->
+                <li>
+                    <hr class="dropdown-divider border-white/[0.08]">
+                </li>
+                <li>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="dropdown-item hover:bg-white/5 flex items-center">
+                            <i data-lucide="toggle-right" class="w-4 h-4 mr-2"></i>
+                            Logout
+                        </button>
+                    </form>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+    <!-- END: Account Menu -->
+</div>
+<!-- END: Top Bar -->

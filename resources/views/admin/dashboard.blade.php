@@ -49,39 +49,59 @@
                 </div>
             </div>
 
-            <div class="col-span-12 lg:col-span-8 mt-8">
-                <div class="intro-y flex items-center h-10">
-                    <h2 class="text-lg font-medium truncate mr-5">Status Produksi Terakhir</h2>
-                </div>
-                <div class="intro-y box p-5 mt-5">
-                    <div class="overflow-x-auto">
-                        <table class="table table-report mt-2">
-                            <thead>
-                                <tr>
-                                    <th class="whitespace-nowrap">TANGGAL</th>
-                                    <th class="whitespace-nowrap">KETERANGAN</th>
-                                    <th class="text-center whitespace-nowrap">STATUS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($produksiTerbaru as $prod)
-                                <tr class="intro-x">
-                                    <td class="font-medium whitespace-nowrap">{{ \Carbon\Carbon::parse($prod->tanggal)->format('d M Y') }}</td>
-                                    <td>
-                                        <div class="text-slate-500 text-xs whitespace-nowrap mt-0.5">{{ $prod->keterangan ?? '-' }}</div>
-                                    </td>
-                                    <td class="w-40">
-                                        <div class="flex items-center justify-center {{ $prod->status == 'berhasil' ? 'text-success' : ($prod->status == 'proses' ? 'text-warning' : 'text-danger') }}">
-                                            <i data-lucide="check-square" class="w-4 h-4 mr-2"></i> {{ ucfirst($prod->status) }}
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+<div class="col-span-12 lg:col-span-8 mt-8">
+    <div class="intro-y flex items-center h-10">
+        <h2 class="text-lg font-medium truncate mr-5">Status Produksi Terakhir</h2>
+        <a href="{{ route('produksi.index') }}" class="ml-auto text-primary truncate">Lihat Semua</a>
+    </div>
+    <div class="intro-y box p-5 mt-5">
+        <div class="overflow-x-auto">
+            <table class="table table-report mt-2">
+                <thead>
+                    <tr>
+                        <th class="whitespace-nowrap">TANGGAL</th>
+                        <th class="whitespace-nowrap">PRODUK YANG DIHASILKAN</th>
+                        <th class="text-center whitespace-nowrap">STATUS</th>
+                        <th class="text-center whitespace-nowrap">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($produksiTerbaru as $prod)
+                    <tr class="intro-x">
+                        <td class="font-medium whitespace-nowrap">
+                            {{ \Carbon\Carbon::parse($prod->tanggal)->format('d M Y') }}
+                        </td>
+                        <td>
+                            @foreach($prod->detail->where('jenis', 'produk') as $item)
+                                <div class="text-slate-500 text-xs whitespace-nowrap mt-0.5">
+                                    <i data-lucide="package" class="w-3 h-3 inline-block mr-1"></i>
+                                    {{ $item->produk->nama ?? 'Produk Terhapus' }} ({{ $item->qty }} pcs)
+                                </div>
+                            @endforeach
+                            @if($prod->detail->where('jenis', 'produk')->count() == 0)
+                                <span class="text-slate-400 italic text-xs">Tidak ada data produk</span>
+                            @endif
+                        </td>
+                        <td class="w-40">
+                            <div class="flex items-center justify-center {{ $prod->status == 'berhasil' ? 'text-success' : ($prod->status == 'proses' ? 'text-warning' : 'text-danger') }}">
+                                <i data-lucide="{{ $prod->status == 'berhasil' ? 'check-square' : ($prod->status == 'proses' ? 'clock' : 'x-circle') }}" class="w-4 h-4 mr-2"></i> 
+                                {{ ucfirst($prod->status) }}
+                            </div>
+                        </td>
+                        <td class="table-report__action w-56">
+                            <div class="flex justify-center items-center">
+                                <a class="flex items-center text-primary" href="{{ route('produksi.show', $prod->id) }}"> 
+                                    <i data-lucide="eye" class="w-4 h-4 mr-1"></i> Detail 
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
             <div class="col-span-12 lg:col-span-4 mt-8">
                 <div class="intro-y flex items-center h-10">

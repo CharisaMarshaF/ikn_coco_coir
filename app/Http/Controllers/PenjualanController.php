@@ -4,14 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Helpers\StokHelper;
 use App\Models\Client;
+use App\Models\CompanyProfile;
 use App\Models\Invoice;
 use App\Models\Penjualan;
 use App\Models\PenjualanDetail;
 use App\Models\Produk;
 use App\Models\SuratJalan;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Barryvdh\DomPDF\Facade\Pdf;
+
 class PenjualanController extends Controller
 {
     public function index(Request $request)
@@ -185,23 +187,29 @@ public function return(Request $request, $id)
     public function print($id)
     {
         $penjualan = Penjualan::with(['client', 'detail.produk', 'invoice', 'suratJalan'])->findOrFail($id);
-        return view('admin.penjualan.print', compact('penjualan'));
+        
+        $company = \App\Models\CompanyProfile::first(); 
+
+        return view('admin.penjualan.print', compact('penjualan', 'company'));
     }
+
+        // File: App\Http\Controllers\PenjualanController.php
 
     public function downloadPDF($id, Request $request)
     {
-        $type = $request->query('type', 'invoice'); // invoice atau sj
+        $type = $request->query('type', 'invoice');
         $penjualan = Penjualan::with(['client', 'detail.produk', 'invoice', 'suratJalan'])->findOrFail($id);
         
-        // Ukuran A5 dalam Points (1 mm = 2.83465 pts)
-        // A5 Landscape: 210mm x 148mm => 595pt x 420pt
+        // Ambil data dari tabel company_profile
+        $company = CompanyProfile::first();
+
+        // Ukuran A5 Landscape
         $customPaper = [0, 0, 595, 420]; 
 
-        $pdf = Pdf::loadView('admin.penjualan.pdf', compact('penjualan', 'type'))
+        $pdf = Pdf::loadView('admin.penjualan.pdf', compact('penjualan', 'type', 'company'))
                 ->setPaper($customPaper, 'landscape');
 
         $filename = ($type == 'sj' ? 'SJ-' : 'INV-') . $penjualan->id . '.pdf';
-        
-        return $pdf->stream($filename); // Gunakan stream agar langsung terbuka di browser/dialog print
+        return $pdf->stream($filename);
     }
 }

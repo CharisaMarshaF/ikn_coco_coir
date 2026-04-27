@@ -8,6 +8,13 @@
     </div>
 </div>
 
+{{-- Alert Error jika ada --}}
+@if(session('error'))
+<div class="alert alert-danger show flex items-center mb-2 mt-5" role="alert"> 
+    <i data-lucide="alert-octagon" class="w-6 h-6 mr-2"></i> {{ session('error') }} 
+</div>
+@endif
+
 <div class="grid grid-cols-12 gap-6 mt-5">
     <div class="col-span-12 sm:col-span-6 xl:col-span-4 intro-y">
         <div class="report-box zoom-in">
@@ -52,56 +59,65 @@
         </form>
     </div>
 
-    <div class="intro-y col-span-12 overflow-auto lg:overflow-visible">
-        <table class="table table-report -mt-2">
-            <thead>
-                <tr>
-                    <th class="whitespace-nowrap">WAKTU</th>
-                    <th class="whitespace-nowrap">KETERANGAN</th>
-                    <th class="text-center whitespace-nowrap">JENIS</th>
-                    <th class="text-right whitespace-nowrap">NOMINAL</th>
-                    <th class="text-center whitespace-nowrap">AKSI</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($kas as $k)
-                <tr class="intro-x">
-                    <td class="w-40">{{ $k->tanggal->format('Y-m-d') }} </td>
-                    
-                    <td>
-                        <div class="font-medium whitespace-nowrap">{{ $k->keterangan }}</div>
-                    </td>
-                    <td class="text-center">
-                        @if($k->jenis == 'masuk')
-                            <span class="text-success font-medium uppercase italic">Uang Masuk</span>
-                        @else
-                            <span class="text-danger font-medium uppercase italic">Uang Keluar</span>
-                        @endif
-                    </td>
-                    <td class="text-right font-bold {{ $k->jenis == 'masuk' ? 'text-success' : 'text-danger' }}">
-                        {{ $k->jenis == 'masuk' ? '+' : '-' }} Rp {{ number_format($k->nominal, 0, ',', '.') }}
-                    </td>
-                    <td class="table-report__action w-56">
-                        <div class="flex justify-center items-center">
-                            <form action="{{ route('kas.destroy', $k->id) }}" method="POST" onsubmit="return confirm('Hapus record kas ini?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="flex items-center text-danger"> 
-                                    <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Delete 
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="5" class="text-center p-10 text-slate-500">Tidak ada transaksi kas pada tanggal ini.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+    <div class="intro-y col-span-12 p-5 bg-white rounded-lg shadow mt-5">
+        <div class="preview">
+            <div class="overflow-x-auto">
+                <table id="example1" class="table table-report table-report--bordered display datatable w-full">
+                    <thead>
+                        <tr>
+                            <th class="whitespace-nowrap w-10">NO</th>
+                            <th class="whitespace-nowrap">WAKTU</th>
+                            <th class="whitespace-nowrap">REKENING</th>
+                            <th class="whitespace-nowrap">KETERANGAN</th>
+                            <th class="text-center whitespace-nowrap">JENIS KAS </th>
+                            <th class="text-right whitespace-nowrap">NOMINAL</th>
+                            <th class="text-center whitespace-nowrap">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($kas as $key => $k)
+                        <tr class="intro-x">
+                            <td class="text-center">{{ $key + 1 }}</td>
+                            <td class="w-40">{{ \Carbon\Carbon::parse($k->tanggal)->format('d/m/Y') }} </td>
+                            <td>
+                                <span class="text-slate-500 text-xs block">Sumber/Tujuan:</span>
+                                <div class="font-medium whitespace-nowrap">{{ $k->rekening->nama ?? 'N/A' }}</div>
+                            </td>
+                            <td>
+                                <div class="font-medium whitespace-nowrap">{{ $k->keterangan }}</div>
+                            </td>
+                            <td class="text-">
+                                @if($k->jenis == 'masuk')
+                                    <span class="text-success font-medium uppercase italic">Uang Masuk</span>
+                                @else
+                                    <span class="text-danger font-medium uppercase italic">Uang Keluar</span>
+                                @endif
+                            </td>
+                            <td class="text- font-bold {{ $k->jenis == 'masuk' ? 'text-success' : 'text-danger' }}">
+                                {{ $k->jenis == 'masuk' ? '+' : '-' }} Rp {{ number_format($k->nominal, 0, ',', '.') }}
+                            </td>
+                            <td class="table-report__action w-56">
+                                <div class="flex justify- items-center">
+                                    <form action="{{ route('kas.destroy', $k->id) }}" method="POST" onsubmit="return confirm('Hapus record kas ini? Saldo rekening akan dikembalikan otomatis.')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="flex items-center text-danger"> 
+                                            <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Delete 
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        {{-- Data kosong ditangani secara otomatis oleh DataTables jika menggunakan ID example1 --}}
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
+{{-- Modal Tambah Kas --}}
 <div id="modal-tambah-kas" class="modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -111,6 +127,15 @@
                     <h2 class="font-medium text-base mr-auto">Input Kas Manual</h2>
                 </div>
                 <div class="modal-body grid grid-cols-12 gap-4 gap-y-3">
+                    <div class="col-span-12">
+                        <label class="form-label">Pilih Rekening</label>
+                        <select name="rekening_id" class="form-select" required>
+                            <option value="">-- Pilih Rekening --</option>
+                            @foreach($rekenings as $rek)
+                                <option value="{{ $rek->id }}">{{ $rek->nama }} (Saldo: Rp {{ number_format($rek->saldo,0,',','.') }})</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="col-span-12">
                         <label class="form-label">Tanggal</label>
                         <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>

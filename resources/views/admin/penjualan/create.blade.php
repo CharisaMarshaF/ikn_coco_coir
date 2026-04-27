@@ -2,7 +2,7 @@
 
 @section('content')
 <style>
-    /* Style TomSelect agar rapi tanpa mematikan fungsi klik */
+    /* Style TomSelect agar rapi */
     .ts-wrapper .ts-control {
         border: 1px solid #e2e8f0 !important;
         border-radius: 0.375rem !important;
@@ -24,15 +24,15 @@
     </div>
 </div>
 
-<form action="{{ route('penjualan.store') }}" method="POST">
+<form action="{{ route('penjualan.store') }}" method="POST" id="formPenjualan">
     @csrf
     <div class="intro-y grid grid-cols-12 gap-5 mt-5">
         <div class="col-span-12 lg:col-span-8">
             <div class="box p-5 grid grid-cols-12 gap-4 mb-5">
                 <div class="col-span-12 sm:col-span-6">
-                    <label class="form-label font-bold text-primary">Client / Pembeli</label>
-                    <select name="client_id" class="tom-select w-full">
-                        <option value="">-- Pembeli Umum (Anonim) --</option>
+                    <label class="form-label font-bold text-primary">Client / Pembeli <span class="text-danger">*</span></label>
+                    <select name="client_id" id="client_id" class="tom-select w-full" required>
+                        <option value="">-- Pilih Client (Wajib) --</option>
                         @foreach($clients as $c)
                         <option value="{{ $c->id }}">{{ $c->nama }} ({{ $c->perusahaan ?? 'Personal' }})</option>
                         @endforeach
@@ -56,12 +56,23 @@
             <div class="grid grid-cols-12 gap-5 mt-5" id="produkList">
                 @foreach($produk as $p)
                 @php $stokSekarang = $p->stok ? $p->stok->jumlah : 0; @endphp
-                <div class="item-produk col-span-12 sm:col-span-4 box p-5 cursor-pointer zoom-in" 
+                <div class="item-produk col-span-12 sm:col-span-4 box p-5 cursor-pointer zoom-in relative border-2 border-transparent hover:border-primary" 
                     data-nama="{{ strtolower($p->nama) }}"
                     onclick="addItem({{ $p->id }}, '{{ $p->nama }}', {{ $p->harga_default }}, {{ $stokSekarang }})">
-                    <div class="font-medium text-base">{{ $p->nama }}</div>
-                    <div class="text-slate-500 text-xs">Stok: {{ $stokSekarang }} {{ $p->satuan }}</div>
-                    <div class="text-primary font-bold mt-2">Rp {{ number_format($p->harga_default, 0, ',', '.') }}</div>
+                    
+                    <div class="absolute top-0 right-0 mr-2 mt-2 bg-primary/10 text-primary rounded-full p-1">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    </div>
+
+                    <div class="font-bold text-base text-slate-700">{{ $p->nama }}</div>
+                    <div class="text-primary font-black mt-1">Rp {{ number_format($p->harga_default, 0, ',', '.') }}</div>
+                    
+                    <div class="mt-3 pt-3 border-t border-slate-100">
+                        <span class="text-xs text-slate-400">Stok Tersedia:</span>
+                        <div class="font-bold {{ $stokSekarang <= 5 ? 'text-danger' : 'text-success' }}">
+                            {{ number_format($stokSekarang, 0) }} {{ $p->satuan }}
+                        </div>
+                    </div>
                 </div>
                 @endforeach
             </div>
@@ -102,6 +113,13 @@
     let cart = [];
 
     function addItem(id, name, defaultPrice, stock) {
+        // Validasi Wajib Pilih Client Sebelum Tambah Barang
+        const clientId = document.getElementById('client_id').value;
+        if (!clientId) {
+            alert('Silakan pilih Client/Pembeli terlebih dahulu!');
+            return;
+        }
+
         if(stock <= 0) {
             alert('Stok produk habis!');
             return;
@@ -115,7 +133,6 @@
                 alert('Maksimal stok tercapai');
             }
         } else {
-            // Awalnya menggunakan harga_default, tapi bisa diubah nanti di updateItem
             cart.push({ 
                 produk_id: id, 
                 nama: name, 
@@ -164,20 +181,19 @@
             grandTotal += subtotal;
             
             html += `
-            <div class="mb-4 bg-slate-50 p-3 rounded-lg  border-slate-200 intro-x">
+            <div class="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200 intro-x">
                 <div class="flex justify-between items-center mb-2">
-    <span class="font-bold text-slate-700">${item.nama}</span>
-    
-    <button type="button" onclick="removeItem(${index})" class="text-danger ml-2">
-        <i data-lucide="trash-2" class="w-4 h-4"></i>
-    </button>
-</div>
+                    <span class="font-bold text-slate-700">${item.nama}</span>
+                    <button type="button" onclick="removeItem(${index})" class="text-danger ml-2">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
                 <input type="hidden" name="items[${index}][produk_id]" value="${item.produk_id}">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="text-[10px] uppercase font-bold text-slate-500">Jumlah (Qty)</label>
+                        <label class="text-[10px] uppercase font-bold text-slate-500">Jumlah</label>
                         <input type="number" name="items[${index}][qty]" value="${item.qty}" 
-                               min="0.01" step="0.01" max="${item.stok_max}"
+                               min="0.01" step="any" max="${item.stok_max}"
                                onchange="updateItem(${index}, 'qty', this.value)" class="form-control form-control-sm">
                     </div>
                     <div>
@@ -193,7 +209,7 @@
         container.innerHTML = html;
         document.getElementById('grand-total').innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
         document.getElementById('input-grand-total').value = grandTotal;
-        lucide.createIcons(); // Re-render icon lucide setelah HTML berubah
+        lucide.createIcons();
     }
 
     function filterProduk() {
@@ -204,5 +220,13 @@
             item.style.display = nama.includes(input) ? "" : "none";
         });
     }
+
+    // Validasi Form sebelum submit
+    document.getElementById('formPenjualan').onsubmit = function(e) {
+        if (cart.length === 0) {
+            e.preventDefault();
+            alert('Keranjang masih kosong!');
+        }
+    };
 </script>
 @endsection
