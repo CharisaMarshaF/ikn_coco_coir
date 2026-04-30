@@ -18,4 +18,9 @@ class BahanBaku extends Model
     {
         return $this->hasMany(PembelianDetail::class, 'bahan_id');
     }
+
+    public function pengambilanDetail()
+    {
+        return $this->hasMany(PengambilanBahanDetail::class, 'bahan_id');
+    }
 }

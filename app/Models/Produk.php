@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Produk extends Model
 {
     protected $table = 'produk';
-    protected $fillable = ['nama','satuan','harga_default'];
+    protected $fillable = ['nama','satuan','harga_default','jenis',];
 
     public function stok()
     {

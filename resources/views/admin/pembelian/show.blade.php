@@ -4,9 +4,14 @@
 <div class="intro-y flex flex-col sm:flex-row items-center mt-8">
     <h2 class="text-lg font-medium mr-auto">Rincian Pembelian</h2>
     <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-        <a href="{{ route('pembelian.pdf', $pembelian->id) }}" target="_blank" class="btn btn-primary shadow-md mr-2">
-            <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak PDF
-        </a>
+        
+        {{-- Hanya tampilkan tombol cetak jika status BUKAN cancel --}}
+        @if($pembelian->status_pembayaran !== 'cancel')
+            <a href="{{ route('pembelian.pdf', $pembelian->id) }}" target="_blank" class="btn btn-primary shadow-md mr-2">
+                <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak PDF
+            </a>
+        @endif
+
         <a href="{{ route('pembelian.index') }}" class="btn btn-secondary shadow-md">Kembali</a>
     </div>
 </div>

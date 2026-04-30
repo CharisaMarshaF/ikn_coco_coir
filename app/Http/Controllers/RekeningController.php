@@ -11,7 +11,8 @@ class RekeningController extends Controller
     {
         // Menampilkan data terbaru dengan paginasi
         $rekening = Rekening::latest()->paginate(10);
-        return view('admin.rekening', compact('rekening'));
+        $title = 'Data Rekening';
+        return view('admin.rekening', compact('rekening', 'title'));
     }
 
     public function store(Request $request)

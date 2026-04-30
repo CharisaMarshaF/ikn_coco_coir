@@ -11,7 +11,8 @@ class CompanyProfileController extends Controller
     public function index()
     {
         $profile = CompanyProfile::first() ?? new CompanyProfile();
-        return view('admin.konfigurasi', compact('profile'));
+        $title = 'Konfigurasi Profil';
+        return view('admin.konfigurasi', compact('profile', 'title'));
     }
 
     public function update(Request $request)
@@ -21,7 +22,8 @@ class CompanyProfileController extends Controller
             'email'   => 'required|email|max:100',
             'telepon' => 'required|max:20',
             'alamat'  => 'required',
-            'logo'    => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            'logo'    => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'website' => 'nullable'
         ]);
 
         $profile = CompanyProfile::find(1);
@@ -31,6 +33,7 @@ class CompanyProfileController extends Controller
             'email'   => $request->email,
             'telepon' => $request->telepon,
             'alamat'  => $request->alamat,
+            'website' => $request->website,
         ];
 
         // 🔥 Upload Logo (FIX UTAMA ADA DI SINI)

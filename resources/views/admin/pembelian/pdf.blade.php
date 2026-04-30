@@ -1,111 +1,125 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Invoice Pembelian #{{ $pembelian->id }}</title>
+    <title>Invoice Pembelian - {{ $pembelian->id }}</title>
     <style>
-        @page {
-            margin: 0cm; /* Reset margin untuk background full */
-        }
-        body { 
-            font-family: 'Helvetica', sans-serif; 
-            font-size: 11px; 
-            color: #333; 
-            margin: 1.5cm; /* Margin konten utama */
+        @page { 
+            size: 210mm 148mm; 
+            margin: 10mm; 
         }
         
-        /* Watermark Logo Background */
-        .watermark {
-            position: fixed;
-            top: 25%;
-            left: 10%;
-            width: 80%;
-            height: 50%;
-            z-index: -1000;
-            opacity: 0.1; /* Transparansi logo di background */
-            text-align: center;
-        }
-        .watermark img {
-            width: 400px; /* Sesuaikan ukuran logo background */
-            filter: grayscale(100%);
+        body { 
+            font-family: 'Courier', monospace; 
+            font-size: 9pt; 
+            margin: 0; 
+            padding: 0;
+            color: #000;
+            line-height: 1.1;
         }
 
-        .header-table { width: 100%; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
-        .company-logo { width: 80px; height: auto; }
-        .company-name { font-size: 18px; font-weight: bold; color: #1e40af; text-transform: uppercase; }
-        .invoice-label { font-size: 22px; font-weight: bold; color: #444; text-align: right; }
+        #watermark {
+            position: fixed;
+            top: 20%;
+            left: 25%;
+            width: 250px;
+            opacity: 0.06;
+            z-index: -1000;
+        }
+
+        .header-table { width: 100%; border-bottom: 2px double #000; margin-bottom: 8px; padding-bottom: 5px; }
+        .logo-top { width: 50px; height: auto; }
+        .company-name { font-size: 12pt; font-weight: bold; text-transform: uppercase; margin: 0; }
+        .company-info { font-size: 7pt; }
+        .document-title { font-size: 16pt; font-weight: bold; text-align: right; }
         
-        .info-table { width: 100%; margin-bottom: 20px; }
-        .info-box { border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+        .info-table { width: 100%; margin-bottom: 8px; }
+        .info-table td { vertical-align: top; font-size: 8pt; }
+        .label-box { font-weight: bold; text-decoration: underline; margin-bottom: 3px; display: block; }
         
-        .main-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .main-table th { background: #1e40af; color: white; padding: 10px; border: 1px solid #1e40af; text-align: left; }
-        .main-table td { padding: 10px; border: 1px solid #ddd; background: rgba(255, 255, 255, 0.7); }
+        .nota-info-table { width: 100%; border-spacing: 0; }
+        .nota-info-table td { padding: 1px 0; }
+
+        .main-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .main-table th { 
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            padding: 4px; 
+            text-align: left;
+            font-size: 8pt;
+        }
+        .main-table td { padding: 4px; font-size: 8pt; vertical-align: top; border-bottom: 1px dotted #ccc; }
+
+        .summary-container { float: right; width: 45%; margin-top: 5px; }
+        .summary-table { width: 100%; border-collapse: collapse; }
+        .summary-table td { padding: 2px 5px; font-size: 9pt; }
+        .border-total { border-top: 1px solid #000; border-bottom: 1px solid #000; }
         
         .text-right { text-align: right; }
         .text-center { text-align: center; }
-        .font-bold { font-weight: bold; }
-        
-        .grand-total-row { background: #f0f4ff !important; font-size: 13px; font-weight: bold; }
-        .footer-sign { margin-top: 50px; width: 100%; }
-        .footer-sign td { width: 50%; text-align: center; }
-        
-        .status-badge {
-            padding: 5px 10px;
-            border: 1px solid #000;
-            text-transform: uppercase;
-            font-weight: bold;
-            display: inline-block;
-        }
+        .bold { font-weight: bold; }
+        .uppercase { text-transform: uppercase; }
     </style>
 </head>
 <body>
-
-    @if($konfigurasi && $konfigurasi->logo)
-    <div class="watermark">
-        <img src="{{ public_path('storage/'.$konfigurasi->logo) }}">
-    </div>
-    @endif
+    
 
     <table class="header-table">
         <tr>
-            <td style="width: 100px;">
+            <td width="10%">
                 @if($konfigurasi && $konfigurasi->logo)
-                    <img src="{{ public_path('storage/'.$konfigurasi->logo) }}" class="company-logo">
+                <img src="{{ base_path('uploads/logo/' . basename($konfigurasi->logo)) }}" class="logo-top">
                 @endif
             </td>
-            <td>
-                <span class="company-name">{{ $konfigurasi->nama_perusahaan ?? 'IKN COCO COIR' }}</span><br>
-                {{ $konfigurasi->alamat ?? 'Alamat belum diatur' }}<br>
-                Email: {{ $konfigurasi->email ?? '-' }} | Telp: {{ $konfigurasi->telepon ?? '-' }}
+            <td width="50%">
+                <h1 class="company-name">{{ $konfigurasi->nama_perusahaan ?? 'NAMA PERUSAHAAN' }}</h1>
+                <div class="company-info">
+                    {{ $konfigurasi->alamat ?? '-' }}<br>
+                    Telp: {{ $konfigurasi->telepon ?? '-' }}
+                </div>
             </td>
-            <td class="invoice-label">
-                INVOICE<br>
-                <span style="font-size: 12px; color: #666;">#PB-{{ str_pad($pembelian->id, 5, '0', STR_PAD_LEFT) }}</span>
+            <td class="document-title">
+                INVOICE PEMBELIAN
             </td>
         </tr>
     </table>
 
     <table class="info-table">
         <tr>
-            <td style="width: 50%; padding-right: 10px;">
-                <div class="info-box">
-                    <small class="font-bold">DITERIMA DARI (SUPPLIER):</small><br>
-                    <span class="font-bold" style="font-size: 13px; color: #1e40af;">{{ $pembelian->supplier->nama }}</span><br>
-                    {{ $pembelian->supplier->alamat ?? 'Alamat tidak tersedia' }}<br>
-                    Telp: {{ $pembelian->supplier->telp ?? '-' }}
-                </div>
-            </td>
-            <td style="width: 50%; padding-left: 10px; vertical-align: top;">
-                <table style="width: 100%;">
+            <td width="55%">
+                <span class="label-box">DITERIMA DARI (SUPPLIER):</span>
+                <table width="100%" style="border-spacing: 0;">
                     <tr>
-                        <td class="font-bold">Tanggal Transaksi</td>
-                        <td>: {{ date('d F Y', strtotime($pembelian->tanggal)) }}</td>
+                        <td width="30%">Nama</td>
+                        <td>: <span class="bold uppercase">{{ $pembelian->supplier->nama }}</span></td>
                     </tr>
                     <tr>
-                        <td class="font-bold">Status Pembayaran</td>
-                        <td>: <span class="status-badge">{{ $pembelian->status_pembayaran }}</span></td>
+                        <td valign="top">Alamat</td>
+                        <td>: {{ $pembelian->supplier->alamat ?? '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Telepon</td>
+                        <td>: {{ $pembelian->supplier->telp ?? '-' }}</td>
                     </tr>
                 </table>
+            </td>
+
+            <td width="45%">
+                <div style="float: right; width: 95%;">
+                    <table class="nota-info-table">
+                        <tr>
+                            <td width="45%">No. Transaksi</td>
+                            <td>: <span class="bold">#PB-{{ str_pad($pembelian->id, 5, '0', STR_PAD_LEFT) }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Tanggal</td>
+                            <td>: {{ date('d/m/Y', strtotime($pembelian->tanggal)) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Status Bayar</td>
+                            <td>: <span class="uppercase bold">{{ $pembelian->status_pembayaran }}</span></td>
+                        </tr>
+                    </table>
+                </div>
             </td>
         </tr>
     </table>
@@ -113,58 +127,50 @@
     <table class="main-table">
         <thead>
             <tr>
-                <th class="text-center" style="width: 30px;">NO</th>
-                <th>DESKRIPSI BAHAN</th>
-                <th class="text-right">HARGA SATUAN</th>
-                <th class="text-center">QTY</th>
-                <th class="text-right">SUBTOTAL</th>
+                <th width="5%" class="text-center">NO</th>
+                <th width="45%">NAMA BAHAN</th>
+                <th width="15%" class="text-center">QTY</th>
+                <th width="15%" class="text-right">HARGA</th>
+                <th width="20%" class="text-right">SUBTOTAL</th>
             </tr>
         </thead>
         <tbody>
             @foreach($pembelian->detail as $index => $item)
             <tr>
-                <td class="text-center">{{ $index + 1 }}</td>
-                <td>
-                    <span class="font-bold">{{ $item->bahan->nama }}</span><br>
-                    <small>Satuan: {{ $item->bahan->satuan }}</small>
+                <td width="5%" class="text-center">{{ $index + 1 }}</td>
+                <td width="45%" class="uppercase">
+                    {{ $item->bahan->nama }}<br>
+                    <small style="font-size: 7pt;">Satuan: {{ $item->bahan->satuan }}</small>
                 </td>
-                <td class="text-right">Rp {{ number_format($item->harga, 0, ',', '.') }}</td>
-                <td class="text-center">{{ $item->qty }}</td>
-                <td class="text-right font-bold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                <td width="15%" class="text-">{{ $item->qty + 0 }}</td>
+                <td width="15%" class="text-">{{ number_format($item->harga, 0, ',', '.') }}</td>
+                <td width="20%" class="text-">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
             </tr>
             @endforeach
         </tbody>
-        <tfoot>
-            <tr class="grand-total-row">
-                <td colspan="4" class="text-right">TOTAL AKHIR PEMBELIAN</td>
-                <td class="text-right" style="color: #1e40af;">Rp {{ number_format($pembelian->total, 0, ',', '.') }}</td>
-            </tr>
-        </tfoot>
     </table>
 
+    <div class="summary-container">
+        <table class="summary-table">
+            <tr>
+                <td class="bold text-right">TOTAL PEMBELIAN:</td>
+                <td class="bold text- border-total" style="width: 50%;">Rp {{ number_format($pembelian->total, 0, ',', '.') }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="clear: both;"></div>
+
     @if($pembelian->keterangan)
-    <div style="margin-top: 15px;">
-        <small class="font-bold">Catatan:</small><br>
-        <div style="font-style: italic; color: #666;">"{{ $pembelian->keterangan }}"</div>
+    <div style="margin-top: 10px; font-size: 8pt;">
+        <span class="bold">Keterangan:</span><br>
+        <i>{{ $pembelian->keterangan }}</i>
     </div>
     @endif
 
-    <table class="footer-sign">
-        <tr>
-            <td>
-                Admin {{ $konfigurasi->nama_perusahaan ?? 'IKN' }},<br><br><br><br><br>
-                ( ____________________ )
-            </td>
-            <td>
-                Supplier,<br><br><br><br><br>
-                ( <strong>{{ $pembelian->supplier->nama }}</strong> )
-            </td>
-        </tr>
-    </table>
-
-    <div style="position: fixed; bottom: 1cm; left: 1.5cm; right: 1.5cm; border-top: 1px solid #ddd; padding-top: 5px;">
-        <small style="color: #999;">Invoice ini dihasilkan secara otomatis oleh Sistem IKN COCO COIR pada {{ date('d/m/Y H:i') }}</small>
+    <div style="margin-top: 20px; font-size: 7pt; font-style: italic; border-top: 1px solid #eee; padding-top: 5px;">
+        * Dokumen ini merupakan bukti sah pembelian bahan baku.<br>
+        * Dicetak secara otomatis oleh sistem pada {{ date('d/m/Y H:i') }}.
     </div>
-
 </body>
 </html>

@@ -5,14 +5,17 @@ use App\Http\Controllers\BahanBakuController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HasilProduksiController;
 use App\Http\Controllers\KasHarianController;
 use App\Http\Controllers\KeuanganController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PembelianController;
+use App\Http\Controllers\PengambilanBahanController;
 use App\Http\Controllers\PenjualanController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\ProduksiController;
 use App\Http\Controllers\RekeningController;
+use App\Http\Controllers\StockLogController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -31,7 +34,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/admin/dashboard', [DashboardController::class, 'index'])
     ->name('admin.dashboard');
     Route::get('/staff/dashboard', function () {
-        return view('dashboard');
+        return view('admin.dashboard');
     })->name('staff.dashboard');
 
     Route::resource('users', UserController::class);
@@ -68,5 +71,22 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
     Route::get('/laporan/penjualan', [LaporanController::class, 'penjualan'])->name('laporan.penjualan');
     Route::get('/laporan/pembelian', [LaporanController::class, 'pembelian'])->name('laporan.pembelian');
     Route::get('/laporan/penjualan/cetak', [LaporanController::class, 'cetakPenjualan'])->name('laporan.penjualan.cetak');
-Route::get('/laporan/pembelian/cetak', [LaporanController::class, 'cetakPembelian'])->name('laporan.pembelian.cetak');
+    Route::get('/laporan/pembelian/cetak', [LaporanController::class, 'cetakPembelian'])->name('laporan.pembelian.cetak');
+    Route::get('/stok-log', [StockLogController::class, 'index'])->name('stock-log.index');
+    Route::get('/log-stok-produk', [StockLogController::class, 'indexProduk'])->name('log.produk');
+    Route::get('/kas', [KasHarianController::class, 'index'])->name('kas.index');
+    Route::get('/kas/export-pdf', [KasHarianController::class, 'exportPdf'])->name('kas.pdf');
+    Route::prefix('pengambilan-bahan')->name('pengambilan.')->group(function () {
+        Route::get('/', [PengambilanBahanController::class, 'index'])->name('index');           // Daftar Pengambilan
+        Route::get('/create', [PengambilanBahanController::class, 'create'])->name('create');   // Form Tambah
+        Route::post('/store', [PengambilanBahanController::class, 'store'])->name('store');     // Proses Simpan
+        Route::delete('/{id}', [PengambilanBahanController::class, 'destroy'])->name('destroy'); // Proses Hapus (Revert Stok)
+    });
+    Route::prefix('hasil-produksi')->name('hasil-produksi.')->group(function () {
+        Route::get('/', [HasilProduksiController::class, 'index'])->name('index');
+        Route::get('/create', [HasilProduksiController::class, 'create'])->name('create');
+        Route::post('/store', [HasilProduksiController::class, 'store'])->name('store');
+        Route::delete('/{id}', [HasilProduksiController::class, 'destroy'])->name('destroy');
+    });
+
 });

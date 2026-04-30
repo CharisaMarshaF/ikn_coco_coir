@@ -1,14 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="intro-y flex flex-col sm:flex-row items-center mt-8">
-    <h2 class="text-lg font-medium mr-auto">Input Produksi Baru</h2>
-    <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-        <a href="{{ route('produksi.index') }}" class="btn btn-outline-secondary shadow-md">
-            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Kembali
-        </a>
-    </div>
-</div>
 
 @if(session('error'))
 <div class="alert alert-danger show mb-5 mt-5">{{ session('error') }}</div>

@@ -19,6 +19,7 @@ class CompanyProfile extends Model
         'logo', 
         'email', 
         'alamat', 
-        'telepon'
+        'telepon',
+        'website',
     ];
 }

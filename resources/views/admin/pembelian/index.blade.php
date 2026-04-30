@@ -1,9 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<h2 class="intro-y text-lg font-medium mt-10">
-    Riwayat Pembelian Bahan
-</h2>
+
 
 <div class="grid grid-cols-12 gap-6 mt-5">
     {{-- ALERT SECTION --}}
@@ -78,7 +76,6 @@
                             </td>
                             <td class="w-40">
                                 <a href="javascript:;" class="font-medium whitespace-nowrap">{{ $p->supplier->nama }}</a> 
-                                <div class="text-slate-500 text-xs whitespace-nowrap mt-0.5">{{ $p->supplier->telp ?? 'No Telp -' }}</div>
                             </td>
                             <td class="text-left">
                                 @if($p->status_pembayaran == 'lunas')

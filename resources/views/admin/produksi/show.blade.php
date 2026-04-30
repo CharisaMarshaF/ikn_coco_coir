@@ -2,11 +2,7 @@
 
 @section('content')
 <div class="intro-y flex flex-col sm:flex-row items-center mt-8">
-    <h2 class="text-lg font-medium mr-auto">Rincian Produksi</h2>
-    <div class="w-full sm:w-auto flex mt-4 sm:mt-0 gap-2">
-       
-        <a href="{{ route('produksi.index') }}" class="btn btn-secondary shadow-md">Kembali</a>
-    </div>
+
 </div>
 
 <div class="intro-y grid grid-cols-12 gap-5 mt-5">
@@ -48,7 +44,7 @@
                     </button>
                 </form>
                 
-                <form action="{{ route('produksi.update-status', $produksi->id) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan produksi ini?')">
+                <form action="{{ route('produksi.update-status', $produksi->id) }}" method="POST" onsubmit="return confirm('Yakin ingin mereject produksi ini?')">
                     @csrf
                     <input type="hidden" name="status" value="reject">
                     <button type="submit" class="btn btn-outline-danger w-full mt-2">

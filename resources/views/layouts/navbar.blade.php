@@ -2,8 +2,7 @@
                 <div class="mobile-menu md:hidden">
                     <div class="mobile-menu-bar">
                         <a href="" class="flex mr-auto">
-                            <img alt="Midone - HTML Admin Template" class="w-6"
-                                src="{{ asset('template/dist/images/logo.svg') }}">
+                            <img alt="Midone - HTML Admin Template" class="w-6" src="{{ asset('template/logo.png') }}">
                         </a>
                         <a href="javascript:;" class="mobile-menu-toggler"> <i data-lucide="bar-chart-2"
                                 class="w-8 h-8 text-white transform -rotate-90"></i> </a>
@@ -136,18 +135,32 @@
                                     <div class="menu__title"> Pembelian </div>
                                 </a>
                             </li>
-                            <li>
+                            {{-- <li>
                                 <a href="{{ route('produksi.index') }}"
                                     class="menu {{ request()->routeIs('produksi.*') ? 'menu--active' : '' }}">
                                     <div class="menu__icon"> <i data-lucide="wrench"></i> </div>
                                     <div class="menu__title"> Produksi </div>
                                 </a>
-                            </li>
+                            </li> --}}
                             <li>
                                 <a href="{{ route('penjualan.index') }}"
                                     class="menu {{ request()->routeIs('penjualan.*') ? 'menu--active' : '' }}">
                                     <div class="menu__icon"> <i data-lucide="shopping-cart"></i> </div>
                                     <div class="menu__title"> Penjualan </div>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('pengambilan.index') }}"
+                                    class="menu {{ request()->routeIs('pengambilan.*') ? 'menu--active' : '' }}">
+                                    <div class="menu__icon"> <i data-lucide="truck"></i> </div>
+                                    <div class="menu__title"> Pengambilan Bahan</div>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('hasil-produksi.index') }}"
+                                    class="menu {{ request()->routeIs('hasil-produksi.*') ? 'menu--active' : '' }}">
+                                    <div class="menu__icon"> <i data-lucide="clipboard"></i> </div>
+                                    <div class="menu__title"> Hasil Produksi </div>
                                 </a>
                             </li>
                         </ul>
@@ -157,8 +170,7 @@
                 <div class="flex mt-[4.7rem] md:mt-0 overflow-hidden">
                     <nav class="side-nav">
                         <a href="" class="intro-x flex items-center pl-5 pt-4 mt-3">
-                            <img alt="IKN Coco Coir Logo" class="w-6"
-                                src="{{ asset('template/dist/images/logo.svg') }}">
+                            <img alt="IKN Coco Coir Logo" class="w-6" src="{{ asset('template/logo.png') }}">
                             <span class="hidden xl:block text-white text-lg ml-3"> IKN COCO COIR </span>
                         </a>
                         <div class="side-nav__devider my-6"></div>
@@ -172,19 +184,22 @@
                             </li>
 
                             <li>
+                                <!-- Menu Utama Master Data -->
                                 <a href="javascript:;"
-                                    class="side-menu {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*') ? 'side-menu--active' : '' }}">
+                                    class="side-menu {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*') ? 'side-menu--active' : '' }}">
                                     <div class="side-menu__icon"> <i data-lucide="database"></i> </div>
                                     <div class="side-menu__title">
                                         Master Data
                                         <div
-                                            class="side-menu__sub-icon {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*') ? 'transform rotate-180' : '' }}">
+                                            class="side-menu__sub-icon {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*') ? 'transform rotate-180' : '' }}">
                                             <i data-lucide="chevron-down"></i>
                                         </div>
                                     </div>
                                 </a>
+
                                 <ul
-                                    class="{{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*') ? 'side-menu__sub-open' : '' }}">
+                                    class="{{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*') ? 'side-menu__sub-open' : '' }}">
+                                    <!-- Submenu User -->
                                     <li>
                                         <a href="{{ route('users.index') }}"
                                             class="side-menu {{ request()->routeIs('users.*') ? 'side-menu--active' : '' }}">
@@ -192,6 +207,8 @@
                                             <div class="side-menu__title"> User </div>
                                         </a>
                                     </li>
+
+                                    <!-- Submenu Supplier -->
                                     <li>
                                         <a href="{{ route('supplier.index') }}"
                                             class="side-menu {{ request()->routeIs('supplier.*') ? 'side-menu--active' : '' }}">
@@ -199,20 +216,28 @@
                                             <div class="side-menu__title"> Supplier </div>
                                         </a>
                                     </li>
+
+                                    <!-- Submenu Bahan Baku -->
+                                    {{-- Aktif jika di route bahan-baku ATAU di stock-log dengan parameter type 'bahan' --}}
                                     <li>
                                         <a href="{{ route('bahan-baku.index') }}"
-                                            class="side-menu {{ request()->routeIs('bahan-baku.*') ? 'side-menu--active' : '' }}">
+                                            class="side-menu {{ request()->routeIs('bahan-baku.*') || (request()->routeIs('stock-log.*') && request('type') == 'bahan') ? 'side-menu--active' : '' }}">
                                             <div class="side-menu__icon"> <i data-lucide="package"></i> </div>
                                             <div class="side-menu__title"> Bahan Baku </div>
                                         </a>
                                     </li>
+
+                                    <!-- Submenu Produk -->
+                                    {{-- Aktif jika di route produk ATAU di stock-log dengan parameter type 'produk' --}}
                                     <li>
                                         <a href="{{ route('produk.index') }}"
-                                            class="side-menu {{ request()->routeIs('produk.*') ? 'side-menu--active' : '' }}">
+                                            class="side-menu {{ request()->routeIs('produk.*') || (request()->routeIs('stock-log.*') && request('type') == 'produk') ? 'side-menu--active' : '' }}">
                                             <div class="side-menu__icon"> <i data-lucide="box"></i> </div>
                                             <div class="side-menu__title"> Produk </div>
                                         </a>
                                     </li>
+
+                                    <!-- Submenu Client -->
                                     <li>
                                         <a href="{{ route('client.index') }}"
                                             class="side-menu {{ request()->routeIs('client.*') ? 'side-menu--active' : '' }}">
@@ -220,6 +245,8 @@
                                             <div class="side-menu__title"> Client </div>
                                         </a>
                                     </li>
+
+                                    <!-- Submenu Konfigurasi -->
                                     <li>
                                         <a href="{{ route('konfigurasi.index') }}"
                                             class="side-menu {{ request()->routeIs('konfigurasi.*') ? 'side-menu--active' : '' }}">
@@ -301,18 +328,33 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('produksi.index') }}"
-                                    class="side-menu {{ request()->routeIs('produksi.*') ? 'side-menu--active' : '' }}">
-                                    <div class="side-menu__icon"> <i data-lucide="wrench"></i> </div>
-                                    <div class="side-menu__title"> Produksi </div>
-                                </a>
-                            </li>
-                            <li>
                                 <a href="{{ route('penjualan.index') }}"
                                     class="side-menu {{ request()->routeIs('penjualan.*') ? 'side-menu--active' : '' }}">
                                     <div class="side-menu__icon"> <i data-lucide="shopping-cart"></i> </div>
                                     <div class="side-menu__title"> Penjualan </div>
                                 </a>
                             </li>
+                            <li>
+                                <a href="{{ route('pengambilan.index') }}"
+                                    class="side-menu {{ request()->routeIs('pengambilan.*') ? 'side-menu--active' : '' }}">
+                                    <div class="side-menu__icon"> <i data-lucide="wrench"></i> </div>
+                                    <div class="side-menu__title"> Pengambilan Bahan </div>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('hasil-produksi.index') }}"
+                                    class="side-menu {{ request()->routeIs('hasil-produksi.*') ? 'side-menu--active' : '' }}">
+                                    <div class="side-menu__icon"> <i data-lucide="clipboard"></i> </div>
+                                    <div class="side-menu__title"> Hasil Produksi </div>
+                                </a>
+                            </li>
+                            {{-- <li>
+                                <a href="{{ route('produksi.index') }}"
+                                    class="side-menu {{ request()->routeIs('produksi.*') ? 'side-menu--active' : '' }}">
+                                    <div class="side-menu__icon"> <i data-lucide="wrench"></i> </div>
+                                    <div class="side-menu__title"> Produksi </div>
+                                </a>
+                            </li> --}}
+
                         </ul>
                     </nav>

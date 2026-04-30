@@ -30,8 +30,8 @@ class LaporanController extends Controller
             'total_return' => $data->where('status', 'return')->sum('total'),
             'count_transaksi' => $data->count(),
         ];
-
-        return view('admin.laporan.penjualan', compact('data', 'summary', 'start_date', 'end_date', 'status'));
+        $title = 'Laporan Penjualan';
+        return view('admin.laporan.penjualan', compact('data', 'summary', 'start_date', 'end_date', 'status', 'title'));
     }
 
     public function pembelian(Request $request)
@@ -59,8 +59,8 @@ class LaporanController extends Controller
             'total_hutang' => $data->where('status_pembayaran', 'hutang')->sum('total'),
             'count_transaksi' => $data->count(),
         ];
-
-        return view('admin.laporan.pembelian', compact('data', 'summary', 'start_date', 'end_date', 'status'));
+        $title = 'Laporan Pembelian';
+        return view('admin.laporan.pembelian', compact('data', 'summary', 'start_date', 'end_date', 'status', 'title'   ));
     }
 
 public function cetakPenjualan(Request $request)

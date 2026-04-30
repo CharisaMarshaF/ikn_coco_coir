@@ -1,9 +1,10 @@
-<?php 
+<?php
 
 namespace App\Http\Controllers;
 
 use App\Models\KasHarian;
 use App\Models\Rekening;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -11,52 +12,102 @@ class KasHarianController extends Controller
 {
     public function index(Request $request)
     {
-        $tanggal = $request->get('tanggal', date('Y-m-d'));
-        
-        // Load relasi rekening agar bisa menampilkan nama rekening di tabel
-        $kas = KasHarian::with('rekening')
-                ->whereDate('tanggal', $tanggal)
-                ->orderBy('created_at', 'desc')
+        // Filter Tanggal (Default: Awal bulan ini sampai hari ini)
+        $tgl_mulai = $request->get('tgl_mulai', date('Y-m-01'));
+        $tgl_selesai = $request->get('tgl_selesai', date('Y-m-d'));
+
+        // Query Data Tabel
+        $kas = KasHarian::with(['rekening'])
+                ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai])
+                ->orderBy('tanggal', 'asc')
+                ->orderBy('created_at', 'asc')
                 ->get();
 
-        // Ambil daftar rekening untuk dropdown di modal tambah
         $rekenings = Rekening::all();
 
-        // Hitung Summary
-        $totalMasuk = KasHarian::whereDate('tanggal', $tanggal)->where('jenis', 'masuk')->sum('nominal');
-        $totalKeluar = KasHarian::whereDate('tanggal', $tanggal)->where('jenis', 'keluar')->sum('nominal');
-        $saldoHariIni = $totalMasuk - $totalKeluar;
+        // Logika Kotak Besar (Per Bulan ini)
+        $bulanSekarang = date('m');
+        $tahunSekarang = date('Y');
+        
+        $totalMasukBulanIni = KasHarian::whereMonth('tanggal', $bulanSekarang)
+                                ->whereYear('tanggal', $tahunSekarang)
+                                ->where('jenis', 'masuk')->sum('total_nominal');
+        $totalKeluarBulanIni = KasHarian::whereMonth('tanggal', $bulanSekarang)
+                                ->whereYear('tanggal', $tahunSekarang)
+                                ->where('jenis', 'keluar')->sum('total_nominal');
 
-        return view('admin.keuangan.kas', compact('kas', 'tanggal', 'totalMasuk', 'totalKeluar', 'saldoHariIni', 'rekenings'));
+        $title = 'Laporan Kas Harian';
+
+        return view('admin.keuangan.kas', compact(
+            'kas', 'tgl_mulai', 'tgl_selesai', 
+            'totalMasukBulanIni', 'totalKeluarBulanIni', 
+            'rekenings', 'title'
+        ));
     }
 
     public function store(Request $request)
     {
+        // Validasi yang lebih fleksibel
         $request->validate([
             'rekening_id' => 'required|exists:rekening,id',
-            'tanggal' => 'required|date',
-            'jenis' => 'required|in:masuk,keluar',
-            'nominal' => 'required|numeric|min:0',
-            'keterangan' => 'required'
+            'tanggal'     => 'required|date',
+            'jenis'       => 'required|in:masuk,keluar',
+            'kategori'    => 'required|in:modal,operasional',
+            'nominal'     => 'nullable|numeric|min:0',
+            'items'       => 'nullable|array',
         ]);
 
         try {
             DB::transaction(function () use ($request) {
-                // 1. Simpan data Kas
-                KasHarian::create($request->all());
+                $totalNominal = 0;
 
-                // 2. Update Saldo di Rekening
+                // Hitung total berdasarkan kategori
+                if ($request->kategori == 'operasional' && $request->has('items')) {
+                    foreach ($request->items as $item) {
+                        if(!empty($item['nama_item'])) {
+                            $totalNominal += ($item['jumlah'] * $item['harga']);
+                        }
+                    }
+                } else {
+                    $totalNominal = $request->nominal ?? 0;
+                }
+
+                // Simpan Header Kas
+                $kas = KasHarian::create([
+                    'rekening_id'   => $request->rekening_id,
+                    'tanggal'       => $request->tanggal,
+                    'jenis'         => $request->jenis,
+                    'kategori'      => $request->kategori,
+                    'total_nominal' => $totalNominal,
+                    'keterangan'    => $request->keterangan,
+                ]);
+
+                // Simpan Detail jika Operasional
+                if ($request->kategori == 'operasional' && $request->has('items')) {
+                    foreach ($request->items as $item) {
+                        if(!empty($item['nama_item'])) {
+                            $kas->details()->create([
+                                'nama_item' => $item['nama_item'],
+                                'jumlah'    => $item['jumlah'],
+                                'harga'     => $item['harga'],
+                                'subtotal'  => $item['jumlah'] * $item['harga']
+                            ]);
+                        }
+                    }
+                }
+
+                // Update Saldo Rekening
                 $rekening = Rekening::findOrFail($request->rekening_id);
                 if ($request->jenis == 'masuk') {
-                    $rekening->increment('saldo', $request->nominal);
+                    $rekening->increment('saldo', $totalNominal);
                 } else {
-                    $rekening->decrement('saldo', $request->nominal);
+                    $rekening->decrement('saldo', $totalNominal);
                 }
             });
 
-            return back()->with('success', 'Data kas berhasil ditambahkan dan saldo rekening telah diperbarui.');
+            return back()->with('success', 'Data kas berhasil ditambahkan.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->with('error', 'Gagal: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -67,20 +118,45 @@ class KasHarianController extends Controller
                 $kas = KasHarian::findOrFail($id);
                 $rekening = Rekening::findOrFail($kas->rekening_id);
 
-                // Kembalikan saldo sebelum data dihapus
-                // Jika kas dihapus adalah 'masuk', maka saldo rekening harus dikurangi
                 if ($kas->jenis == 'masuk') {
-                    $rekening->decrement('saldo', $kas->nominal);
+                    $rekening->decrement('saldo', $kas->total_nominal);
                 } else {
-                    $rekening->increment('saldo', $kas->nominal);
+                    $rekening->increment('saldo', $kas->total_nominal);
                 }
 
                 $kas->delete();
             });
-
-            return back()->with('success', 'Data kas berhasil dihapus dan saldo rekening telah disesuaikan.');
+            return back()->with('success', 'Data berhasil dihapus.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+            return back()->with('error', 'Gagal: ' . $e->getMessage());
         }
     }
+
+public function exportPdf(Request $request)
+{
+    $tgl_mulai = $request->get('tgl_mulai', date('Y-m-01'));
+    $tgl_selesai = $request->get('tgl_selesai', date('Y-m-d'));
+
+    // 1. Hitung Saldo Awal (Logic tarik mundur saldo riil)
+    $totalMasukSejakMulai = KasHarian::where('tanggal', '>=', $tgl_mulai)->where('jenis', 'masuk')->sum('total_nominal');
+    $totalKeluarSejakMulai = KasHarian::where('tanggal', '>=', $tgl_mulai)->where('jenis', 'keluar')->sum('total_nominal');
+    $totalSaldoSekarang = Rekening::sum('saldo');
+    $saldoAwalRiil = $totalSaldoSekarang - $totalMasukSejakMulai + $totalKeluarSejakMulai;
+
+    // 2. Ambil data mutasi BESERTA detail itemnya
+    $data = KasHarian::with(['rekening', 'details']) // Penting: load details
+            ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai])
+            ->orderBy('tanggal', 'asc')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+    $pdf = Pdf::loadView('admin.keuangan.export_pdf', [
+        'data' => $data,
+        'tgl_mulai' => $tgl_mulai,
+        'tgl_selesai' => $tgl_selesai,
+        'saldoAwal' => $saldoAwalRiil,
+    ])->setPaper('a4', 'landscape'); // Gunakan Landscape karena kolomnya banyak
+
+    return $pdf->stream('Laporan_Kas_Detailed.pdf');
+}
 }

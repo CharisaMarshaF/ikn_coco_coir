@@ -4,12 +4,6 @@
 <div class="row">
     <div class="col-12">
         <div class="card my-4">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                    <h3 class="text-black text-capitalize ps-3">Konfigurasi Profil CV / Invoice</h3>
-                </div>
-            </div>
-
             <div class="card-body px-0 pb-2">
                 @if(session('success'))
                     <div class="alert alert-success text-white mx-3">{{ session('success') }}</div>
@@ -36,6 +30,12 @@
                                     <label class="form-label font-weight-bold">Telepon</label>
                                     <input type="text" name="telepon" value="{{ old('telepon', $profile->telepon) }}" 
                                            class="form-control border p-2" required>
+                                </div>
+
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label font-weight-bold">Website</label>
+                                    <input type="text" name="website" value="{{ old('website', $profile->website) }}" 
+                                           class="form-control border p-2">
                                 </div>
 
                                 <div class="col-md-6 mb-4">

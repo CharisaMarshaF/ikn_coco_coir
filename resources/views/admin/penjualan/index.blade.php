@@ -1,9 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<h2 class="intro-y text-lg font-medium mt-10">
-    Riwayat Penjualan Produk
-</h2>
+
 
 <div class="grid grid-cols-12 gap-6 mt-5">
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">

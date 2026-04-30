@@ -7,6 +7,8 @@ use App\Models\BahanBaku;
 use App\Models\CompanyProfile;
 use App\Models\Pembelian;
 use App\Models\PembelianDetail;
+use App\Models\StockLog; 
+use App\Models\StokBahan;
 use App\Models\Supplier;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -18,7 +20,9 @@ class PembelianController extends Controller
     {
         $search = $request->get('search');
         
-        $pembelian = Pembelian::with(['supplier', 'detail'])
+        // Optimasi: Select kolom tertentu dan eager loading
+        $pembelian = Pembelian::select('id', 'supplier_id', 'tanggal', 'total', 'status_pembayaran')
+            ->with(['supplier:id,nama', 'detail'])
             ->when($search, function($query) use ($search) {
                 $query->where('id', 'like', "%{$search}%")
                       ->orWhereHas('supplier', function($q) use ($search) {
@@ -27,15 +31,17 @@ class PembelianController extends Controller
             })
             ->latest()
             ->paginate(10);
-
-        return view('admin.pembelian.index', compact('pembelian'));
+        
+        $title = 'Data Pembelian';
+        return view('admin.pembelian.index', compact('pembelian', 'title'));
     }
 
     public function create()
     {
-        $suppliers = Supplier::all();
-        $bahan = BahanBaku::all(); 
-        return view('admin.pembelian.create', compact('suppliers', 'bahan'));
+        $suppliers = Supplier::select('id', 'nama')->get();
+        $bahan = BahanBaku::select('id', 'nama', 'satuan')->get(); 
+        $title = 'Tambah Pembelian';
+        return view('admin.pembelian.create', compact('suppliers', 'bahan', 'title'));
     }
 
     public function store(Request $request)
@@ -71,14 +77,33 @@ class PembelianController extends Controller
                     'subtotal' => $subtotal,
                 ]);
 
+                // 1. Ambil stok lama untuk keperluan Log
+                $stokRecord = StokBahan::where('bahan_id', $item['bahan_id'])->first();
+                $stokLama = $stokRecord->jumlah ?? 0;
+
+                // 2. Update Stok Fisik
                 StokHelper::updateStokBahan($item['bahan_id'], $item['qty']);
+
+                // 3. Catat ke StockLog
+                StockLog::create([
+                    'item_id' => $item['bahan_id'],
+                    'item_type' => 'bahan_baku',
+                    'jenis' => 'masuk',
+                    'jumlah' => $item['qty'],
+                    'stok_sebelum' => $stokLama,
+                    'stok_sesudah' => $stokLama + $item['qty'],
+                    'sumber' => 'pembelian',
+                    'keterangan' => "Pembelian ID: #{$pembelian->id} dari Supplier ID: {$request->supplier_id}",
+                    'user_id' => auth()->id()
+                ]);
+
                 $totalPembelian += $subtotal;
             }
 
             $pembelian->update(['total' => $totalPembelian]);
 
             DB::commit();
-            return redirect()->route('pembelian.index')->with('success', 'Pembelian Berhasil.');
+            return redirect()->route('pembelian.index')->with('success', 'Pembelian Berhasil tercatat.');
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -97,7 +122,25 @@ class PembelianController extends Controller
             }
 
             foreach ($pembelian->detail as $detail) {
+                // 1. Ambil stok saat ini sebelum dikurangi (karena pembatalan beli = stok keluar)
+                $stokRecord = StokBahan::where('bahan_id', $detail->bahan_id)->first();
+                $stokLama = $stokRecord->jumlah ?? 0;
+
+                // 2. Balikkan Stok (dikurangi karena pembelian batal)
                 StokHelper::updateStokBahan($detail->bahan_id, -$detail->qty);
+
+                // 3. Catat ke StockLog
+                StockLog::create([
+                    'item_id' => $detail->bahan_id,
+                    'item_type' => 'bahan_baku',
+                    'jenis' => 'keluar',
+                    'jumlah' => $detail->qty,
+                    'stok_sebelum' => $stokLama,
+                    'stok_sesudah' => $stokLama - $detail->qty,
+                    'sumber' => 'pembatalan',
+                    'keterangan' => "Pembatalan Transaksi Pembelian #{$pembelian->id}",
+                    'user_id' => auth()->id()
+                ]);
             }
 
             $pembelian->update([
@@ -115,9 +158,9 @@ class PembelianController extends Controller
 
     public function show($id)
     {
-        // Menghapus relasi rekening yang tidak digunakan
         $pembelian = Pembelian::with(['supplier', 'detail.bahan'])->findOrFail($id);
-        return view('admin.pembelian.show', compact('pembelian'));
+        $title = 'Detail Pembelian';
+        return view('admin.pembelian.show', compact('pembelian', 'title'));
     }
 
     public function cetakPDF($id)
