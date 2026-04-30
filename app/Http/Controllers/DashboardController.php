@@ -7,71 +7,84 @@ use App\Models\Penjualan;
 use App\Models\KasHarian;
 use App\Models\Produksi; 
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB; // Tambahkan ini
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-public function index()
-{
-    $now = Carbon::now();
+    public function index()
+    {
+        $now = Carbon::now();
+        $today = Carbon::today();
 
-    // Statistik Ringkasan (Tetap sama)
-    $totalProduk = Produk::count() ?? 0;
-    $penjualanBulanIni = Penjualan::whereMonth('tanggal', $now->month)
-        ->whereYear('tanggal', $now->year)
-        ->where('status', 'berhasil')
-        ->sum('total') ?? 0;
-    $totalPemasukan = (float) KasHarian::whereMonth('tanggal', $now->month)
-        ->whereYear('tanggal', $now->year) 
-        ->where('jenis', 'masuk')
-        ->sum('total_nominal') ?? 0;
-    $jumlahProduksiBulanIni = Produksi::whereMonth('tanggal', $now->month)
-        ->whereYear('tanggal', $now->year)
-        ->count();
+        // --- STATISTIK RINGKASAN ---
+        $totalProduk = Produk::count() ?? 0;
 
-    // --- LOGIKA GRAFIK PENJUALAN BULANAN (12 BULAN TERAKHIR) ---
-    $salesData = Penjualan::where('status', 'berhasil')
-        ->where('tanggal', '>=', $now->copy()->subMonths(11)->startOfMonth())
-        ->select(
-            DB::raw('DATE_FORMAT(tanggal, "%Y-%m") as month_year'),
-            DB::raw('SUM(total) as total')
-        )
-        ->groupBy('month_year')
-        ->orderBy('month_year', 'ASC')
-        ->get();
+        // Omset Hari Ini (Penjualan Berhasil)
+        $penjualanHariIni = Penjualan::whereDate('tanggal', $today)
+            ->where('status', 'berhasil')
+            ->sum('total') ?? 0;
 
-    $chartLabels = [];
-    $chartValues = [];
+        // Omset Bulan Ini (Penjualan Berhasil)
+        $penjualanBulanIni = Penjualan::whereMonth('tanggal', $now->month)
+            ->whereYear('tanggal', $now->year)
+            ->where('status', 'berhasil')
+            ->sum('total') ?? 0;
 
-    // Looping 12 bulan terakhir untuk memastikan data urut
-    for ($i = 11; $i >= 0; $i--) {
-        $month = $now->copy()->subMonths($i);
-        $key = $month->format('Y-m'); // Untuk pencarian data
-        $label = $month->format('M Y'); // Untuk label grafik (Jan 2024, dsb)
+        // Pemasukan Kas Bulan Ini (Dari KasHarian)
+        $totalPemasukan = (float) KasHarian::whereMonth('tanggal', $now->month)
+            ->whereYear('tanggal', $now->year) 
+            ->where('jenis', 'masuk')
+            ->sum('total_nominal') ?? 0;
+
+        // Total Produksi Bulan Ini
+        $jumlahProduksiBulanIni = Produksi::whereMonth('tanggal', $now->month)
+            ->whereYear('tanggal', $now->year)
+            ->count();
+
+        // --- LOGIKA GRAFIK PENJUALAN BULANAN (12 BULAN TERAKHIR) ---
+        $salesData = Penjualan::where('status', 'berhasil')
+            ->where('tanggal', '>=', $now->copy()->subMonths(11)->startOfMonth())
+            ->select(
+                DB::raw('DATE_FORMAT(tanggal, "%Y-%m") as month_year'),
+                DB::raw('SUM(total) as total')
+            )
+            ->groupBy('month_year')
+            ->orderBy('month_year', 'ASC')
+            ->get();
+
+        $chartLabels = [];
+        $chartValues = [];
+
+        for ($i = 11; $i >= 0; $i--) {
+            $month = $now->copy()->subMonths($i);
+            $key = $month->format('Y-m');
+            $label = $month->format('M Y');
+            
+            $chartLabels[] = $label;
+            $monthlyTotal = $salesData->firstWhere('month_year', $key);
+            $chartValues[] = $monthlyTotal ? (float)$monthlyTotal->total : 0;
+        }
+
+        // --- DATA TABEL & TRANSAKSI ---
+        $produksiTerbaru = Produksi::with(['detail' => function($query) {
+            $query->where('jenis', 'produk')->with('produk');
+        }])->latest()->take(5)->get();
         
-        $chartLabels[] = $label;
+        $recentTransactions = Penjualan::with('client')->latest()->take(5)->get();
         
-        $monthlyTotal = $salesData->firstWhere('month_year', $key);
-        $chartValues[] = $monthlyTotal ? (float)$monthlyTotal->total : 0;
-    }
+        $title = 'Dashboard';
 
-    $produksiTerbaru = Produksi::with(['detail' => function($query) {
-        $query->where('jenis', 'produk')->with('produk');
-    }])->latest()->take(5)->get();
-    
-    $recentTransactions = Penjualan::with('client')->latest()->take(5)->get();
-    
-    $title = 'Dashboard';
-    return view('admin.dashboard', compact(
-        'totalProduk', 
-        'penjualanBulanIni', 
-        'totalPemasukan', 
-        'jumlahProduksiBulanIni',
-        'produksiTerbaru',
-        'recentTransactions',
-        'chartLabels',
-        'chartValues',
-        'title'
-    ));
-}  
+        return view('admin.dashboard', compact(
+            'totalProduk', 
+            'penjualanHariIni',
+            'penjualanBulanIni', 
+            'totalPemasukan', 
+            'jumlahProduksiBulanIni',
+            'produksiTerbaru',
+            'recentTransactions',
+            'chartLabels',
+            'chartValues',
+            'title'
+        ));
+    }  
 }

@@ -118,7 +118,7 @@
                 qty: 1,
                 jenis: type,
                 // PERBAIKAN: Berikan default value yang valid untuk semua jenis
-                kategori_pola: (type === 'proses') ? 'Buat' : 'Jadi' 
+                kategori_pola: (type === 'proses') ? 'Bulat' : 'Jadi' 
             });
         }
         renderCart();
@@ -167,7 +167,7 @@
                     <select name="items[${index}][kategori_pola]" 
                             class="form-select form-select-sm mt-1" 
                             onchange="updatePola(${index}, this.value)">
-                        <option value="Buat" ${item.kategori_pola === 'Buat' ? 'selected' : ''}>Buat</option>
+                        <option value="Bulat" ${item.kategori_pola === 'Bulat' ? 'selected' : ''}>Bulat</option>
                         <option value="Setengah_jadi" ${item.kategori_pola === 'Setengah_jadi' ? 'selected' : ''}>Setengah Jadi</option>
                         <option value="Jadi" ${item.kategori_pola === 'Jadi' ? 'selected' : ''}>Jadi</option>
                     </select>

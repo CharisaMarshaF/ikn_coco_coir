@@ -4,57 +4,74 @@
 <div class="grid grid-cols-12 gap-6">
     <div class="col-span-12">
         <div class="grid grid-cols-12 gap-6">
-            {{-- BAGIAN 1: RINGKASAN LAPORAN (4 BOX) --}}
+            {{-- BAGIAN 1: RINGKASAN LAPORAN --}}
             <div class="col-span-12 mt-8">
                 <div class="intro-y flex items-center h-10">
                     <h2 class="text-lg font-medium truncate mr-5">Ringkasan Laporan</h2>
                 </div>
                 <div class="grid grid-cols-12 gap-6 mt-5">
+                    <!-- Omset Hari Ini -->
                     <div class="col-span-12 sm:col-span-6 xl:col-span-3 intro-y">
                         <div class="report-box zoom-in">
                             <div class="box p-5">
                                 <div class="flex">
-                                    <i data-lucide="package" class="report-box__icon text-primary"></i>
+                                    <i data-lucide="coins" class="report-box__icon text-primary"></i>
+                                    <div class="ml-auto">
+                                        <div class="report-box__indicator bg-success cursor-pointer" title="Hari Ini">Hari Ini</div>
+                                    </div>
                                 </div>
-                                <div class="text-2xl lg:text-3xl font-medium leading-8 mt-6">{{ number_format($totalProduk, 0, ',', '.') }}</div>
-                                <div class="text-base text-slate-500 mt-1">Item Produk</div>
+                                <div class="text-2xl font-medium leading-8 mt-6">
+                                    <span class="text-sm align-middle">Rp</span> {{ number_format($penjualanHariIni, 0, ',', '.') }}
+                                </div>
+                                <div class="text-base text-slate-500 mt-1">Omset Hari Ini</div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Omset Bulan Ini -->
                     <div class="col-span-12 sm:col-span-6 xl:col-span-3 intro-y">
                         <div class="report-box zoom-in">
                             <div class="box p-5">
                                 <div class="flex">
                                     <i data-lucide="shopping-cart" class="report-box__icon text-pending"></i>
+                                    <div class="ml-auto">
+                                        <div class="report-box__indicator bg-pending cursor-pointer" title="Bulan Ini">Bulan Ini</div>
+                                    </div>
                                 </div>
-                                <div class="text-2xl lg:text-3xl font-medium leading-8 mt-6 text-pending">
-                                    <span class="text-sm lg:text-base align-middle">Rp</span> {{ number_format($penjualanBulanIni, 0, ',', '.') }}
+                                <div class="text-2xl font-medium leading-8 mt-6 text-pending">
+                                    <span class="text-sm align-middle">Rp</span> {{ number_format($penjualanBulanIni, 0, ',', '.') }}
                                 </div>
-                                <div class="text-base text-slate-500 mt-1">Penjualan Bulan Ini</div>
+                                <div class="text-base text-slate-500 mt-1">Omset Bulan Ini</div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Pemasukan Kas -->
                     <div class="col-span-12 sm:col-span-6 xl:col-span-3 intro-y">
                         <div class="report-box zoom-in">
                             <div class="box p-5">
                                 <div class="flex">
                                     <i data-lucide="credit-card" class="report-box__icon text-success"></i>
                                 </div>
-                                <div class="text-2xl lg:text-3xl font-medium leading-8 mt-6 text-success">
-                                    <span class="text-sm lg:text-base align-middle">Rp</span> {{ number_format($totalPemasukan, 0, ',', '.') }}
+                                <div class="text-2xl font-medium leading-8 mt-6 text-success">
+                                    <span class="text-sm align-middle">Rp</span> {{ number_format($totalPemasukan, 0, ',', '.') }}
                                 </div>
-                                <div class="text-base text-slate-500 mt-1">Pemasukan Kas (Bulan Ini)</div>
+                                <div class="text-base text-slate-500 mt-1">Kas Masuk (Bulan Ini)</div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Total Produksi -->
                     <div class="col-span-12 sm:col-span-6 xl:col-span-3 intro-y">
                         <div class="report-box zoom-in">
                             <div class="box p-5">
                                 <div class="flex">
                                     <i data-lucide="clipboard" class="report-box__icon text-warning"></i>
                                 </div>
-                                <div class="text-2xl lg:text-3xl font-medium leading-8 mt-6 text-warning">{{ number_format($jumlahProduksiBulanIni, 0, ',', '.') }}</div>
-                                <div class="text-base text-slate-500 mt-1">Total Produksi</div>
+                                <div class="text-2xl font-medium leading-8 mt-6 text-warning">
+                                    {{ number_format($jumlahProduksiBulanIni, 0, ',', '.') }}
+                                </div>
+                                <div class="text-base text-slate-500 mt-1">Total Produksi (Bulan Ini)</div>
                             </div>
                         </div>
                     </div>
@@ -64,10 +81,10 @@
             {{-- BAGIAN 2: GRAFIK PENJUALAN --}}
             <div class="col-span-12 lg:col-span-8 mt-8">
                 <div class="intro-y flex items-center h-10">
-                    <h2 class="text-lg font-medium truncate mr-5">Tren Penjualan 7 Hari Terakhir</h2>
+                    <h2 class="text-lg font-medium truncate mr-5">Grafik Penjualan 12 Bulan Terakhir</h2>
                 </div>
                 <div class="intro-y box p-5 mt-5">
-                    <div style="height: 300px;">
+                    <div style="height: 350px;">
                         <canvas id="salesChart"></canvas>
                     </div>
                 </div>
@@ -103,8 +120,8 @@
                 </div>
             </div>
 
-            {{-- BAGIAN 4: STATUS PRODUKSI TERAKHIR (Dibawah Grafik) --}}
-            <div class="col-span-12 lg:col-span-12 mt-4">
+            {{-- BAGIAN 4: STATUS PRODUKSI TERAKHIR --}}
+            <div class="col-span-12 mt-4">
                 <div class="intro-y flex items-center h-10">
                     <h2 class="text-lg font-medium truncate mr-5">Status Produksi Terakhir</h2>
                     <a href="{{ route('produksi.index') }}" class="ml-auto text-primary truncate">Lihat Semua</a>
@@ -161,19 +178,19 @@
         </div>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const ctx = document.getElementById('salesChart').getContext('2d');
-        
         new Chart(ctx, {
-            type: 'bar', // Diubah ke Bar Chart agar perbandingan antar bulan jelas
+            type: 'bar',
             data: {
                 labels: {!! json_encode($chartLabels) !!},
                 datasets: [{
                     label: 'Total Penjualan',
                     data: {!! json_encode($chartValues) !!},
-                    backgroundColor: '#1e40af', // Biru solid
+                    backgroundColor: '#1e40af',
                     borderRadius: 5,
                     barPercentage: 0.6
                 }]
@@ -198,14 +215,8 @@
                                 if (value >= 1000000) return 'Rp ' + (value / 1000000) + 'jt';
                                 if (value >= 1000) return 'Rp ' + (value / 1000) + 'rb';
                                 return 'Rp ' + value;
-                            },
-                            font: { size: 11 }
-                        },
-                        grid: { color: 'rgba(0,0,0,0.05)' }
-                    },
-                    x: {
-                        ticks: { font: { size: 10 } },
-                        grid: { display: false }
+                            }
+                        }
                     }
                 }
             }
