@@ -15,25 +15,23 @@ class HasilProduksiController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search');
-        
         $hasilProduksi = HasilProduksi::with(['details.produk', 'user'])
-            ->when($search, function($query) use ($search) {
+            ->when($search, function ($query) use ($search) {
                 $query->where('kode_produksi', 'like', "%{$search}%");
             })
             ->latest()
             ->paginate(10);
-        
+
         $title = 'Data Hasil Produksi';
         return view('admin.hasil_produksi.index', compact('hasilProduksi', 'title'));
     }
 
     public function create()
     {
-        // Hanya ambil produk yang jenisnya 'proses'
         $produkProses = Produk::with('stok')
-            ->where('jenis', 'proses')
+            ->whereIn('jenis', ['proses', 'jadi'])
             ->get();
-            
+
         $title = 'Catat Hasil Produksi';
         return view('admin.hasil_produksi.create', compact('produkProses', 'title'));
     }
@@ -43,6 +41,8 @@ class HasilProduksiController extends Controller
         $request->validate([
             'tanggal' => 'required|date',
             'items' => 'required|array|min:1',
+            'items.*.produk_id' => 'required|exists:produk,id',
+            'items.*.qty' => 'required|numeric|min:0.01',
         ]);
 
         try {
@@ -52,51 +52,52 @@ class HasilProduksiController extends Controller
                 'tanggal' => $request->tanggal,
                 'kode_produksi' => 'HPR-' . date('YmdHis'),
                 'keterangan' => $request->keterangan,
-                'user_id' => auth()->id()
+                'user_id' => auth()->id(),
             ]);
 
             foreach ($request->items as $item) {
-                $produkId = $item['produk_id'];
+                $produk = Produk::findOrFail($item['produk_id']);
                 $qtyMasuk = $item['qty'];
+                $itemPola = $item['kategori_pola'] ?? null;
 
                 // 1. Simpan Detail
                 HasilProduksiDetail::create([
                     'hasil_produksi_id' => $hasil->id,
-                    'produk_id' => $produkId,
+                    'produk_id' => $produk->id,
                     'qty' => $qtyMasuk,
+                    'kategori_pola' => $itemPola 
                 ]);
 
-                // 2. Update Stok Fisik Produk
-                $stokRecord = StokProduk::firstOrCreate(
-                    ['produk_id' => $produkId],
-                    ['jumlah' => 0]
-                );
-                
-                $stokLama = $stokRecord->jumlah;
-                $stokBaru = $stokLama + $qtyMasuk;
-                
-                $stokRecord->update(['jumlah' => $stokBaru]);
+                // 2. Update Stok: Jika jenis 'jadi' ATAU pola 'Jadi'
+                if ($produk->jenis === 'jadi' || $itemPola === 'Jadi') {
+                    $stokRecord = StokProduk::firstOrCreate(
+                        ['produk_id' => $produk->id],
+                        ['jumlah' => 0]
+                    );
 
-                // 3. Catat ke StockLog (PENTING: item_type = produk)
-                StockLog::create([
-                    'item_id' => $produkId,
-                    'item_type' => 'produk',
-                    'jenis' => 'masuk',
-                    'jumlah' => $qtyMasuk,
-                    'stok_sebelum' => $stokLama,
-                    'stok_sesudah' => $stokBaru,
-                    'sumber' => 'produksi',
-                    'keterangan' => "Hasil Produksi #{$hasil->kode_produksi}",
-                    'user_id' => auth()->id()
-                ]);
+                    $stokLama = $stokRecord->jumlah;
+                    $stokBaru = $stokLama + $qtyMasuk;
+                    $stokRecord->update(['jumlah' => $stokBaru]);
+
+                    StockLog::create([
+                        'item_id' => $produk->id,
+                        'item_type' => 'produk',
+                        'jenis' => 'masuk',
+                        'jumlah' => $qtyMasuk,
+                        'stok_sebelum' => $stokLama,
+                        'stok_sesudah' => $stokBaru,
+                        'sumber' => 'produksi',
+                        'keterangan' => "Hasil Produksi #{$hasil->kode_produksi} (Pola: {$itemPola})",
+                        'user_id' => auth()->id()
+                    ]);
+                }
             }
 
             DB::commit();
-            return redirect()->route('hasil-produksi.index')->with('success', 'Hasil produksi berhasil dicatat dan stok bertambah.');
-
+            return redirect()->route('hasil-produksi.index')->with('success', 'Hasil produksi berhasil dicatat.');
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->withInput()->with('error', 'Gagal: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Gagal Simpan: ' . $e->getMessage());
         }
     }
 
@@ -104,38 +105,47 @@ class HasilProduksiController extends Controller
     {
         try {
             DB::beginTransaction();
-            $hasil = HasilProduksi::with('details')->findOrFail($id);
+            // Load detail dan produk
+            $hasil = HasilProduksi::with('details.produk')->findOrFail($id);
 
             foreach ($hasil->details as $detail) {
-                $stokRecord = StokProduk::where('produk_id', $detail->produk_id)->first();
-                $stokLama = $stokRecord->jumlah ?? 0;
-                $stokBaru = $stokLama - $detail->qty;
+                // Perbaikan: Cek pola dari $detail, bukan dari $hasil
+                if ($detail->produk->jenis === 'jadi' || $detail->kategori_pola === 'Jadi') {
+                    $stokRecord = StokProduk::where('produk_id', $detail->produk_id)->first();
 
-                // Update Stok (Dikurangi karena data produksi dihapus)
-                if ($stokRecord) {
-                    $stokRecord->update(['jumlah' => $stokBaru]);
+                    if ($stokRecord) {
+                        $stokLama = $stokRecord->jumlah;
+                        $stokBaru = $stokLama - $detail->qty;
+                        $stokRecord->update(['jumlah' => $stokBaru]);
+
+                        StockLog::create([
+                            'item_id' => $detail->produk_id,
+                            'item_type' => 'produk',
+                            'jenis' => 'keluar',
+                            'jumlah' => $detail->qty,
+                            'stok_sebelum' => $stokLama,
+                            'stok_sesudah' => $stokBaru,
+                            'sumber' => 'produksi',
+                            'keterangan' => "Pembatalan Produksi #{$hasil->kode_produksi}",
+                            'user_id' => auth()->id()
+                        ]);
+                    }
                 }
-
-                // Log Pembatalan
-                StockLog::create([
-                    'item_id' => $detail->produk_id,
-                    'item_type' => 'produk',
-                    'jenis' => 'keluar',
-                    'jumlah' => $detail->qty,
-                    'stok_sebelum' => $stokLama,
-                    'stok_sesudah' => $stokBaru,
-                    'sumber' => 'produksi',
-                    'keterangan' => "Penghapusan Data Produksi #{$hasil->kode_produksi}",
-                    'user_id' => auth()->id()
-                ]);
             }
 
-            $hasil->delete();
+            $hasil->delete(); // Ini akan menghapus detail jika Anda menggunakan onDelete('cascade') di DB
             DB::commit();
-            return back()->with('success', 'Data berhasil dihapus & stok dikoreksi.');
+            return back()->with('success', 'Data berhasil dibatalkan dan stok telah disesuaikan.');
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->with('error', 'Gagal menghapus data.');
+            return back()->with('error', 'Gagal Hapus: ' . $e->getMessage());
         }
+    }
+
+    public function show($id)
+    {
+        $hasil = HasilProduksi::with(['details.produk', 'user'])->findOrFail($id);
+        $title = 'Detail Hasil Produksi ' . $hasil->kode_produksi;
+        return view('admin.hasil_produksi.show', compact('hasil', 'title'));
     }
 }

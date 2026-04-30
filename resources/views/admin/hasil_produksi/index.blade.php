@@ -32,9 +32,13 @@
                         <td class="table-report__action w-56">
                             <div class="flex justify- items-center">
                                 <!-- Tombol Pemicu Modal (Disamakan dengan Bahan Baku) -->
+                                <a class="flex items-center mr-3 text-primary" href="{{ route('hasil-produksi.show', $h->id) }}"> 
+    <i data-lucide="eye" class="w-4 h-4 mr-1"></i> Detail 
+</a>
                                 <a class="flex items-center text-danger" href="javascript:;" data-tw-toggle="modal" data-tw-target="#modal-delete-{{ $h->id }}"> 
-                                    <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Hapus 
+                                    <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Batalkan  
                                 </a>
+                                
                             </div>
                         </td>
                     </tr>
@@ -59,13 +63,13 @@
                             <i data-lucide="x-circle" class="w-16 h-16 text-danger mx-auto mt-3"></i> 
                             <div class="text-3xl mt-5">Apakah Anda yakin?</div>
                             <div class="text-slate-500 mt-2">
-                                Data produksi <b>#{{ $h->kode_produksi }}</b> akan dihapus.<br>
+                                Data produksi <b>#{{ $h->kode_produksi }}</b> akan dibatalkan.<br>
                                 <span class="text-danger font-medium text-xs">Stok produk akan dikurangi kembali secara otomatis!</span>
                             </div>
                         </div>
                         <div class="px-5 pb-8 text-center">
                             <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24 mr-1">Cancel</button>
-                            <button type="submit" class="btn btn-danger w-24">Hapus</button>
+                            <button type="submit" class="btn btn-danger w-24">Batalkan</button>
                         </div>
                     </form>
                 </div>

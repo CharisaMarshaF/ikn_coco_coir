@@ -38,19 +38,11 @@
                         <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>
                     </div>
 
-                    <div>
-                        <label class="form-label font-medium">Kategori Pola</label>
-                        <select name="kategori_pola" class="form-control" required>
-                            <option value="">-- Pilih Kategori --</option>
-                            <option value="bulat">Bulat</option>
-                            <option value="set jadi">Set Jadi</option>
-                            <option value="jadi">Jadi</option>
-                        </select>
-                    </div>
+                    
 
                     <div>
                         <label class="form-label font-medium">Keterangan</label>
-                        <textarea name="keterangan" class="form-control" rows="3" placeholder="Opsional..."></textarea>
+                        <textarea name="keterangan" class="form-control" rows="6" placeholder="Opsional..."></textarea>
                     </div>
 
                     <div class="pt-4">

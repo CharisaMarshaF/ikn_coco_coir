@@ -5,23 +5,69 @@ namespace App\Http\Controllers;
 use App\Models\BahanBaku;
 use App\Models\PengambilanBahan;
 use App\Models\PengambilanBahanDetail;
-use App\Models\StokBahan;
 use App\Models\StockLog;
+use App\Models\StokBahan;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PengambilanBahanController extends Controller
 {
-    public function index()
+public function index(Request $request)
     {
+        $dari = $request->get('dari');
+        $sampai = $request->get('sampai');
+
         $pengambilan = PengambilanBahan::with(['details.bahan'])
+            ->when($dari && $sampai, function($query) use ($dari, $sampai) {
+                $query->whereBetween('tanggal', [$dari, $sampai]);
+            })
             ->latest()
             ->paginate(10);
 
         $title = 'Data Pengambilan Bahan';
-        return view('admin.pengambilan.index', compact('pengambilan', 'title'));
+        return view('admin.pengambilan.index', compact('pengambilan', 'title', 'dari', 'sampai'));
     }
 
+public function cetakPdf(Request $request)
+{
+    $dari = $request->get('dari');
+    $sampai = $request->get('sampai');
+
+    // 1. Inisialisasi Query
+    $query = PengambilanBahanDetail::with(['bahan', 'pengambilan']);
+    
+    // 2. Tambahkan filter HANYA JIKA input tanggal ada
+    if ($dari && $sampai) {
+        $query->whereHas('pengambilan', function($q) use ($dari, $sampai) {
+            $q->whereBetween('tanggal', [$dari, $sampai]);
+        });
+    }
+
+    // 3. Ambil data (Sekarang $data pasti terdefinisi, baik terfilter maupun tidak)
+    $data = $query->get();
+
+    // 4. Hitung Ringkasan / Subtotal dari hasil $data di atas
+    $summary = $data->groupBy('bahan_id')->map(function ($items) {
+        return [
+            'nama' => $items->first()->bahan->nama ?? 'Bahan Dihapus',
+            'satuan' => $items->first()->bahan->satuan ?? '',
+            'total_qty' => $items->sum('qty')
+        ];
+    });
+
+    // 5. Load View PDF
+    $pdf = Pdf::loadView('admin.pengambilan.pdf', compact('data', 'summary', 'dari', 'sampai'));
+    
+    // 6. Penamaan File yang aman (Tanpa karakter / atau \)
+    if ($dari && $sampai) {
+        $filename = "Laporan_Pengambilan_" . $dari . "_sd_" . $sampai . ".pdf";
+    } else {
+        $filename = "Semua_Laporan_Pengambilan.pdf";
+    }
+
+    return $pdf->stream($filename);
+}
     public function create()
     {
         $bahanBaku = BahanBaku::with('stok')->orderBy('nama', 'asc')->get();
@@ -33,7 +79,6 @@ class PengambilanBahanController extends Controller
     {
         $request->validate([
             'tanggal' => 'required|date',
-            'kategori_pola' => 'required|in:bulat,set jadi,jadi',
             'bahan_ids' => 'required|array|min:1',
             'qtys' => 'required|array',
             'qtys.*' => 'required|numeric|min:0.01',
@@ -49,13 +94,12 @@ class PengambilanBahanController extends Controller
                 // 1. Simpan Master
                 $pengambilan = PengambilanBahan::create([
                     'tanggal' => $request->tanggal,
-                    'kategori_pola' => $request->kategori_pola,
-                    'keterangan' => $request->keterangan ?? 'Pengambilan produksi pola ' . $request->kategori_pola,
+                    'keterangan' => $request->keterangan ?? 'Pengambilan produksi',
                 ]);
 
                 foreach ($request->bahan_ids as $index => $bahanId) {
                     $qtyAmbil = $request->qtys[$index];
-                    
+
                     $stok = StokBahan::where('bahan_id', $bahanId)->first();
                     $stokLama = $stok ? $stok->jumlah : 0;
 
@@ -67,7 +111,7 @@ class PengambilanBahanController extends Controller
                     PengambilanBahanDetail::create([
                         'pengambilan_id' => $pengambilan->id,
                         'bahan_id' => $bahanId,
-                        'qty' => $qtyAmbal ?? $qtyAmbil, 
+                        'qty' => $qtyAmbal ?? $qtyAmbil,
                     ]);
 
                     // 3. Update Stok
@@ -83,7 +127,7 @@ class PengambilanBahanController extends Controller
                         'stok_sebelum' => $stokLama,
                         'stok_sesudah' => $stokBaru,
                         'sumber' => 'produksi',
-                        'keterangan' => "Pengambilan pola {$request->kategori_pola} (#{$pengambilan->id})",
+                        'keterangan' => "Pengambilan bahan (#{$pengambilan->id})",
                         'user_id' => auth()->id()
                     ]);
                 }
@@ -91,7 +135,6 @@ class PengambilanBahanController extends Controller
 
             // PERBAIKAN: Pastikan mengarah ke 'pengambilan.index' sesuai route Anda
             return redirect()->route('pengambilan.index')->with('success', 'Berhasil mencatat pengambilan bahan.');
-
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal: ' . $e->getMessage())->withInput();
         }
@@ -128,5 +171,32 @@ class PengambilanBahanController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal: ' . $e->getMessage());
         }
+    }
+    public function laporan(Request $request)
+    {
+        $dari = $request->get('dari');
+        $sampai = $request->get('sampai');
+
+        // Ambil data detail bahan yang diambil berdasarkan range tanggal
+        $query = PengambilanBahanDetail::with(['bahan', 'pengambilan'])
+            ->whereHas('pengambilan', function ($q) use ($dari, $sampai) {
+                if ($dari && $sampai) {
+                    $q->whereBetween('tanggal', [$dari, $sampai]);
+                }
+            });
+
+        $data = $query->get();
+
+        // Hitung total akumulasi per bahan untuk ringkasan di bawah
+        $summary = $data->groupBy('bahan_id')->map(function ($items) {
+            return [
+                'nama' => $items->first()->bahan->nama,
+                'satuan' => $items->first()->bahan->satuan,
+                'total_qty' => $items->sum('qty')
+            ];
+        });
+
+        $title = 'Laporan Pengambilan Bahan';
+        return view('admin.pengambilan.laporan', compact('data', 'summary', 'dari', 'sampai', 'title'));
     }
 }

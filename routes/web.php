@@ -87,6 +87,7 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
         Route::get('/create', [HasilProduksiController::class, 'create'])->name('create');
         Route::post('/store', [HasilProduksiController::class, 'store'])->name('store');
         Route::delete('/{id}', [HasilProduksiController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}', [HasilProduksiController::class, 'show'])->name('show');
     });
-
+Route::get('/pengambilan/pdf', [PengambilanBahanController::class, 'cetakPdf'])->name('pengambilan.pdf');
 });

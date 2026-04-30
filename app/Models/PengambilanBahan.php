@@ -13,7 +13,6 @@ class PengambilanBahan extends Model
 
     protected $fillable = [
         'tanggal',
-        'kategori_pola',
         'keterangan'
     ];
 
