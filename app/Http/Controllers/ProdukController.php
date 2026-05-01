@@ -106,10 +106,16 @@ class ProdukController extends Controller
         $produk = Produk::findOrFail($id);
         
         DB::transaction(function () use ($produk) {
-            $produk->stok()->delete();
+            // Karena StokProduk juga pakai SoftDeletes, 
+            // ini akan mengisi kolom deleted_at di tabel stok_produk
+            if ($produk->stok) {
+                $produk->stok->delete();
+            }
+            
+            // Ini akan mengisi kolom deleted_at di tabel produk
             $produk->delete();
         });
 
-        return redirect()->back()->with('success', 'Produk berhasil dihapus');
+        return redirect()->back()->with('success', 'Produk berhasil dipindahkan ke tempat sampah (Soft Delete)');
     }
 }

@@ -7,7 +7,7 @@ use App\Models\BahanBaku;
 use App\Models\CompanyProfile;
 use App\Models\Pembelian;
 use App\Models\PembelianDetail;
-use App\Models\StockLog; 
+use App\Models\StockLog;
 use App\Models\StokBahan;
 use App\Models\Supplier;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -19,27 +19,37 @@ class PembelianController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search');
-        
-        // Optimasi: Select kolom tertentu dan eager loading
+
         $pembelian = Pembelian::select('id', 'supplier_id', 'tanggal', 'total', 'status_pembayaran')
-            ->with(['supplier:id,nama', 'detail'])
-            ->when($search, function($query) use ($search) {
-                $query->where('id', 'like', "%{$search}%")
-                      ->orWhereHas('supplier', function($q) use ($search) {
-                          $q->where('nama', 'like', "%{$search}%");
-                      });
+            ->with([
+                'supplier' => function ($q) {
+                    $q->withTrashed();
+                },
+                'detail'
+            ])
+            ->whereMonth('tanggal', date('m'))
+            ->whereYear('tanggal', date('Y'))
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('id', 'like', "%{$search}%")
+                        ->orWhereHas('supplier', function ($sub) use ($search) {
+                            $sub->where('nama', 'like', "%{$search}%");
+                        });
+                });
             })
-            ->latest()
+            ->latest('tanggal') 
+            ->latest('id')     
             ->paginate(10);
-        
-        $title = 'Data Pembelian';
+
+        $title = 'Data Pembelian Bulan Ini';
         return view('admin.pembelian.index', compact('pembelian', 'title'));
     }
 
     public function create()
     {
+        // 2. Hanya tampilkan supplier dan bahan yang masih AKTIF untuk transaksi baru
         $suppliers = Supplier::select('id', 'nama')->get();
-        $bahan = BahanBaku::select('id', 'nama', 'satuan')->get(); 
+        $bahan = BahanBaku::select('id', 'nama', 'satuan')->get();
         $title = 'Tambah Pembelian';
         return view('admin.pembelian.create', compact('suppliers', 'bahan', 'title'));
     }
@@ -47,7 +57,7 @@ class PembelianController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'supplier_id' => 'required',
+            'supplier_id' => 'required|exists:suppliers,id', // Pastikan supplier aktif
             'tanggal' => 'required|date',
             'items' => 'required|array',
         ]);
@@ -58,8 +68,8 @@ class PembelianController extends Controller
             $pembelian = Pembelian::create([
                 'supplier_id' => $request->supplier_id,
                 'tanggal' => $request->tanggal,
-                'total' => 0, 
-                'status_pembayaran' => 'lunas', 
+                'total' => 0,
+                'status_pembayaran' => 'lunas',
                 'status' => 'aktif',
                 'keterangan' => $request->keterangan
             ]);
@@ -68,7 +78,7 @@ class PembelianController extends Controller
 
             foreach ($request->items as $item) {
                 $subtotal = $item['qty'] * $item['harga'];
-                
+
                 PembelianDetail::create([
                     'pembelian_id' => $pembelian->id,
                     'bahan_id' => $item['bahan_id'],
@@ -77,14 +87,12 @@ class PembelianController extends Controller
                     'subtotal' => $subtotal,
                 ]);
 
-                // 1. Ambil stok lama untuk keperluan Log
-                $stokRecord = StokBahan::where('bahan_id', $item['bahan_id'])->first();
+                // 3. Gunakan withTrashed() untuk mencari record stok (jaga-jaga jika bahan di-softdelete tapi stok record masih ada)
+                $stokRecord = StokBahan::withTrashed()->where('bahan_id', $item['bahan_id'])->first();
                 $stokLama = $stokRecord->jumlah ?? 0;
 
-                // 2. Update Stok Fisik
                 StokHelper::updateStokBahan($item['bahan_id'], $item['qty']);
 
-                // 3. Catat ke StockLog
                 StockLog::create([
                     'item_id' => $item['bahan_id'],
                     'item_type' => 'bahan_baku',
@@ -93,7 +101,7 @@ class PembelianController extends Controller
                     'stok_sebelum' => $stokLama,
                     'stok_sesudah' => $stokLama + $item['qty'],
                     'sumber' => 'pembelian',
-                    'keterangan' => "Pembelian ID: #{$pembelian->id} dari Supplier ID: {$request->supplier_id}",
+                    'keterangan' => "Pembelian ID: #{$pembelian->id} dari Supplier",
                     'user_id' => auth()->id()
                 ]);
 
@@ -104,7 +112,6 @@ class PembelianController extends Controller
 
             DB::commit();
             return redirect()->route('pembelian.index')->with('success', 'Pembelian Berhasil tercatat.');
-
         } catch (\Exception $e) {
             DB::rollback();
             return back()->withInput()->with('error', 'Gagal: ' . $e->getMessage());
@@ -122,14 +129,13 @@ class PembelianController extends Controller
             }
 
             foreach ($pembelian->detail as $detail) {
-                // 1. Ambil stok saat ini sebelum dikurangi (karena pembatalan beli = stok keluar)
-                $stokRecord = StokBahan::where('bahan_id', $detail->bahan_id)->first();
+                // 4. Tetap bisa membatalkan meski Bahan Baku sudah di-softdelete
+                $stokRecord = StokBahan::withTrashed()->where('bahan_id', $detail->bahan_id)->first();
                 $stokLama = $stokRecord->jumlah ?? 0;
 
-                // 2. Balikkan Stok (dikurangi karena pembelian batal)
+                // Balikkan Stok (dikurangi karena pembelian batal)
                 StokHelper::updateStokBahan($detail->bahan_id, -$detail->qty);
 
-                // 3. Catat ke StockLog
                 StockLog::create([
                     'item_id' => $detail->bahan_id,
                     'item_type' => 'bahan_baku',
@@ -145,7 +151,7 @@ class PembelianController extends Controller
 
             $pembelian->update([
                 'status' => 'cancelled',
-                'status_pembayaran' => 'cancel' 
+                'status_pembayaran' => 'cancel'
             ]);
 
             DB::commit();
@@ -158,19 +164,37 @@ class PembelianController extends Controller
 
     public function show($id)
     {
-        $pembelian = Pembelian::with(['supplier', 'detail.bahan'])->findOrFail($id);
+        // 5. withTrashed pada supplier dan bahan baku agar detail lengkap
+        $pembelian = Pembelian::with([
+            'supplier' => function ($q) {
+                $q->withTrashed();
+            },
+            'detail.bahan' => function ($q) {
+                $q->withTrashed();
+            }
+        ])->findOrFail($id);
+
         $title = 'Detail Pembelian';
         return view('admin.pembelian.show', compact('pembelian', 'title'));
     }
 
     public function cetakPDF($id)
     {
-        $pembelian = Pembelian::with(['supplier', 'detail.bahan'])->findOrFail($id);
-        $konfigurasi = CompanyProfile::first(); // Ambil data profil perusahaan
-        
+        // 6. Pastikan PDF juga memuat data yang di-softdelete
+        $pembelian = Pembelian::with([
+            'supplier' => function ($q) {
+                $q->withTrashed();
+            },
+            'detail.bahan' => function ($q) {
+                $q->withTrashed();
+            }
+        ])->findOrFail($id);
+
+        $konfigurasi = CompanyProfile::first();
+
         $pdf = Pdf::loadView('admin.pembelian.pdf', compact('pembelian', 'konfigurasi'))
-                ->setPaper('a4', 'portrait');
-                
-        return $pdf->stream('Invoice-Pembelian-'.$pembelian->id.'.pdf');
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Invoice-Pembelian-' . $pembelian->id . '.pdf');
     }
 }

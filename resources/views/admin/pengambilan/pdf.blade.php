@@ -1,96 +1,107 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
     <title>Laporan Pengambilan Bahan</title>
     <style>
-        body { font-family: 'Helvetica', sans-serif; font-size: 10pt; color: #333; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        .title { font-size: 16pt; font-weight: bold; text-transform: uppercase; }
-        .subtitle { font-size: 10pt; color: #666; }
+        /* Mengatur font dan line-height agar teks lebih rapat */
+        body { font-family: sans-serif; font-size: 10px; color: #333; line-height: 1.2; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #999; padding: 10px; vertical-align: top; }
-        th { background: #f2f2f2; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
+        .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        .header h2 { margin: 0; font-size: 16px; text-transform: uppercase; }
+        .header h3 { margin: 2px 0; font-size: 12px; }
+        .header p { margin: 2px 0; font-size: 10px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        /* Padding dikurangi menjadi 3px 5px untuk efisiensi ruang */
+        th, td { border: 1px solid #999; padding: 3px 5px; text-align: left; vertical-align: top; }
+        th { background: #f2f2f2; font-weight: bold; text-align: center; text-transform: uppercase; font-size: 9px; }
         
-        .text-center { text-align: center; }
         .text-right { text-align: right; }
+        .text-center { text-align: center; }
         
-        /* Gaya untuk list bahan di dalam satu kotak transaksi */
-        .bahan-list { margin: 0; padding: 0; list-style: none; }
-        .bahan-item { border-bottom: 1px solid #eee; padding: 2px 0; font-size: 9pt; }
-        .bahan-item:last-child { border-bottom: none; }
-        
-        .summary-box { margin-top: 30px; width: 50%; float: right; }
-        .summary-title { font-weight: bold; background: #eee; text-align: center; border: 1px solid #999; padding: 5px; }
-        .clear { clear: both; }
+        h4 { margin: 10px 0 5px 0; font-size: 11px; text-transform: uppercase; }
+
+        /* Summary box dibuat lebih ringkas */
+        .summary-box { width: 55%; margin-top: 15px; }
+        .summary-box table td { padding: 2px 5px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="title">Laporan Pengambilan Bahan Baku</div>
-        <div class="subtitle">
-            @if($dari && $sampai)
-                Periode: {{ date('d/m/Y', strtotime($dari)) }} - {{ date('d/m/Y', strtotime($sampai)) }}
-            @else
-                Periode: Semua Data
-            @endif
-        </div>
+        <h2>{{ $konfigurasi->nama_perusahaan ?? 'IKN COCO COIR' }}</h2>
+        <h3>LAPORAN PENGAMBILAN BAHAN BAKU</h3>
+        <p>
+            Periode: 
+            <strong>{{ \Carbon\Carbon::parse($dari)->translatedFormat('d F Y') }}</strong> 
+            s/d 
+            <strong>{{ \Carbon\Carbon::parse($sampai)->translatedFormat('d F Y') }}</strong>
+        </p>
     </div>
 
+    <h4>Rincian Transaksi</h4>
     <table>
         <thead>
             <tr>
-                <th width="30">NO</th>
-                <th width="80">TANGGAL</th>
-                <th>DAFTAR BAHAN YANG DIAMBIL</th>
-                <th>KETERANGAN</th>
+                <th width="25">No</th>
+                <th width="100">Tanggal</th>
+                <th>Nama Bahan</th>
+                <th class="text-right" width="100">Qty Ambil</th>
             </tr>
         </thead>
         <tbody>
-            {{-- GROUPING DATA BERDASARKAN ID PENGAMBILAN --}}
-            @foreach($data->groupBy('pengambilan_id') as $id_pengambilan => $details)
-            @php $master = $details->first()->pengambilan; @endphp
-            <tr>
-                <td class="text-center">{{ $loop->iteration }}</td>
-                <td class="text-center">{{ date('d/m/Y', strtotime($master->tanggal)) }}</td>
-                <td>
-                    <div class="bahan-list">
-                        @foreach($details as $detail)
-                        <div class="bahan-item">
-                            • {{ $detail->bahan->nama ?? 'Bahan Dihapus' }} 
-                            <strong>({{ (float)$detail->qty }} {{ $detail->bahan->satuan ?? '' }})</strong>
-                        </div>
-                        @endforeach
-                    </div>
-                </td>
-                <td class="subtitle italic">{{ $master->keterangan }}</td>
-            </tr>
+            @php 
+                $groupedData = $data->groupBy('pengambilan_id');
+                $no = 1;
+            @endphp
+
+            @foreach($groupedData as $pengambilanId => $items)
+                @foreach($items as $index => $row)
+                <tr>
+                    {{-- Rowspan untuk menggabungkan kolom No dan Tanggal per ID Pengambilan --}}
+                    @if($index === 0)
+                        <td class="text-center" rowspan="{{ $items->count() }}">{{ $no++ }}</td>
+                        <td rowspan="{{ $items->count() }}">
+                            {{ \Carbon\Carbon::parse($row->pengambilan->tanggal)->translatedFormat('d F Y') }}
+                            <div style="font-size: 8px; color: #666; margin-top: 2px;">ID: #{{ $row->pengambilan_id }}</div>
+                        </td>
+                    @endif
+
+                    <td>
+                        {{ $row->bahan ? ($row->bahan->trashed() ? $row->bahan->nama . ' (Dihapus)' : $row->bahan->nama) : 'N/A' }}
+                    </td>
+                    <td class="text-right">
+                        <strong>{{ number_format($row->qty, 2) }}</strong> {{ $row->bahan->satuan ?? '-' }}
+                    </td>
+                </tr>
+                @endforeach
             @endforeach
         </tbody>
     </table>
 
-    <div class="clear"></div>
-
-    {{-- REKAPITULASI (TOTAL SEMUA) --}}
     <div class="summary-box">
-        <div class="summary-title">TOTAL AKUMULASI PENGGUNAAN</div>
+        <h4>Total Akumulasi Bahan</h4>
         <table>
             <thead>
                 <tr>
                     <th>Nama Bahan</th>
-                    <th class="text-right">Total Keluar</th>
+                    <th class="text-right" width="100">Total Qty</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($summary as $s)
+                @foreach($summary as $item)
                 <tr>
-                    <td>{{ $s['nama'] }}</td>
-                    <td class="text-right"><strong>{{ (float)$s['total_qty'] }} {{ $s['satuan'] }}</strong></td>
+                    <td>{{ $item['nama'] }}</td>
+                    <td class="text-right">
+                        <strong>{{ number_format($item['total_qty'], 2) }}</strong> {{ $item['satuan'] }}
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    <div style="margin-top: 30px; text-align: right; font-size: 9px; color: #666;">
+        Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }}
     </div>
 </body>
 </html>

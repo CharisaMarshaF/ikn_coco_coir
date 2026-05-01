@@ -9,7 +9,6 @@ class SupplierController extends Controller
 {
     public function index()
     {
-
         $suppliers = Supplier::latest()->paginate(10);
         $title = 'Data Supplier';
         return view('admin.supplier', compact('suppliers', 'title'));
@@ -43,8 +42,8 @@ class SupplierController extends Controller
     public function destroy($id)
     {
         $supplier = Supplier::findOrFail($id);
-        $supplier->delete();
+        $supplier->delete(); 
 
-        return redirect()->back()->with('success', 'Supplier berhasil dihapus');
+        return redirect()->back()->with('success', 'Supplier berhasil dinonaktifkan (Data histori tetap aman)');
     }
 }

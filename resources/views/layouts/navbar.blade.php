@@ -98,7 +98,7 @@
                                 </ul>
                             </li>
 
-                            <li>
+                            {{-- <li>
                                 <a href="javascript:;"
                                     class="menu {{ request()->routeIs('laporan.*') ? 'menu--active' : '' }}">
                                     <div class="menu__icon"> <i data-lucide="file-text"></i> </div>
@@ -124,7 +124,7 @@
                                         </a>
                                     </li>
                                 </ul>
-                            </li>
+                            </li> --}}
 
                             <li class="side-nav__devider my-6"></li>
 
@@ -288,7 +288,7 @@
                                 </ul>
                             </li>
 
-                            <li>
+                            {{-- <li>
                                 <a href="javascript:;"
                                     class="side-menu {{ request()->is('laporan*') ? 'side-menu--active' : '' }}">
                                     <div class="side-menu__icon"> <i data-lucide="file-text"></i> </div>
@@ -315,8 +315,8 @@
                                             <div class="side-menu__title"> Laporan Pembelian</div>
                                         </a>
                                     </li>
-                                </ul>
-                            </li>
+                                </ul> 
+                            </li> --}}
 
                             <li class="side-nav__devider my-6"></li>
 

@@ -3,16 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; 
 
 class StokProduk extends Model
 {
-    protected $table = 'stok_produk';
-    public $timestamps = false;
+    use SoftDeletes; 
 
-    protected $fillable = ['produk_id','jumlah'];
+    protected $table = 'stok_produk';
+    
+    public $timestamps = false; 
+
+    protected $fillable = ['produk_id', 'jumlah'];
 
     public function produk()
     {
-        return $this->belongsTo(Produk::class);
+        return $this->belongsTo(Produk::class)->withTrashed();
     }
 }

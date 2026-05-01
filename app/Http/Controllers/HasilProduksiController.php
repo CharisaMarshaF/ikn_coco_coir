@@ -2,34 +2,86 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Produk;
-use App\Models\StokProduk;
 use App\Models\HasilProduksi;
 use App\Models\HasilProduksiDetail;
+use App\Models\Produk;
 use App\Models\StockLog;
+use App\Models\StokProduk;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class HasilProduksiController extends Controller
 {
-    public function index(Request $request)
-    {
-        $search = $request->get('search');
-        $hasilProduksi = HasilProduksi::with(['details.produk', 'user'])
-            ->when($search, function ($query) use ($search) {
-                $query->where('kode_produksi', 'like', "%{$search}%");
-            })
-            ->latest()
-            ->paginate(10);
+public function index(Request $request)
+{
+    $search = $request->get('search');
+    
+    // Default filter: Bulan ini (dari tanggal 1 sampai hari ini)
+    $tgl_mulai = $request->get('tgl_mulai', date('Y-m-01'));
+    $tgl_selesai = $request->get('tgl_selesai', date('Y-m-d'));
 
-        $title = 'Data Hasil Produksi';
-        return view('admin.hasil_produksi.index', compact('hasilProduksi', 'title'));
+    $hasilProduksi = HasilProduksi::with(['details.produk' => function($q) {
+            $q->withTrashed();
+        }, 'user'])
+        ->when($search, function ($query) use ($search) {
+            $query->where('kode_produksi', 'like', "%{$search}%");
+        })
+        // Filter Tanggal
+        ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai])
+        // Urutan terbaru
+        ->orderBy('tanggal', 'desc')
+        ->orderBy('created_at', 'desc')
+        ->paginate(10);
+
+    $title = 'Data Hasil Produksi';
+    return view('admin.hasil_produksi.index', compact('hasilProduksi', 'title', 'tgl_mulai', 'tgl_selesai'));
+}
+
+public function cetakLaporan(Request $request)
+{
+    $tgl_mulai = $request->get('start_date') ?? $request->get('tgl_mulai') ?? \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
+    $tgl_selesai = $request->get('end_date') ?? $request->get('tgl_selesai') ?? \Carbon\Carbon::now()->format('Y-m-d');
+
+    $data = HasilProduksi::with(['details.produk' => function($q) {
+            $q->withTrashed(); 
+        }, 'user'])
+        ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai])
+        ->orderBy('tanggal', 'asc')
+        ->get();
+
+    // --- TAMBAHKAN LOGIC SUMMARY BERIKUT ---
+    $summary = [];
+    foreach($data as $row) {
+        foreach($row->details as $det) {
+            $prodName = $det->produk ? ($det->produk->trashed() ? $det->produk->nama . ' (Dihapus)' : $det->produk->nama) : 'N/A';
+            if(!isset($summary[$prodName])) {
+                $summary[$prodName] = [
+                    'qty' => 0,
+                    'satuan' => $det->produk->satuan ?? '-'
+                ];
+            }
+            $summary[$prodName]['qty'] += $det->qty;
+        }
     }
+    // ---------------------------------------
 
+    $pdf = Pdf::loadView('admin.hasil_produksi.pdf_laporan', [
+        'data' => $data,
+        'summary' => $summary,
+        'tgl_mulai' => $tgl_mulai,
+        'tgl_selesai' => $tgl_selesai,
+        'konfigurasi' => \App\Models\CompanyProfile::first()
+    ])->setPaper('a4', 'portrait');
+
+    return $pdf->stream('Laporan-Produksi-'.$tgl_mulai.'-to-'.$tgl_selesai.'.pdf');
+}
     public function create()
     {
+        // Saat mencatat produksi baru, hanya tampilkan produk yang BELUM dihapus
         $produkProses = Produk::with('stok')
             ->whereIn('jenis', ['proses', 'jadi'])
+            ->orderBy('nama', 'asc')
             ->get();
 
         $title = 'Catat Hasil Produksi';
@@ -65,12 +117,13 @@ class HasilProduksiController extends Controller
                     'hasil_produksi_id' => $hasil->id,
                     'produk_id' => $produk->id,
                     'qty' => $qtyMasuk,
-                    'kategori_pola' => $itemPola 
+                    'kategori_pola' => $itemPola
                 ]);
 
                 // 2. Update Stok: Jika jenis 'jadi' ATAU pola 'Jadi'
                 if ($produk->jenis === 'jadi' || $itemPola === 'Jadi') {
-                    $stokRecord = StokProduk::firstOrCreate(
+                    // Cari record stok (termasuk yang di-soft delete jika ada)
+                    $stokRecord = StokProduk::withTrashed()->firstOrCreate(
                         ['produk_id' => $produk->id],
                         ['jumlah' => 0]
                     );
@@ -105,13 +158,16 @@ class HasilProduksiController extends Controller
     {
         try {
             DB::beginTransaction();
-            // Load detail dan produk
-            $hasil = HasilProduksi::with('details.produk')->findOrFail($id);
+            // Load detail dengan produk yang mungkin sudah dihapus (soft delete)
+            $hasil = HasilProduksi::with(['details.produk' => function ($q) {
+                $q->withTrashed();
+            }])->findOrFail($id);
 
             foreach ($hasil->details as $detail) {
-                // Perbaikan: Cek pola dari $detail, bukan dari $hasil
+                // Cek apakah produk atau pola mengharuskan pengurangan stok kembali (revert)
                 if ($detail->produk->jenis === 'jadi' || $detail->kategori_pola === 'Jadi') {
-                    $stokRecord = StokProduk::where('produk_id', $detail->produk_id)->first();
+                    // Cari record stok bahkan jika produk induknya sudah dihapus
+                    $stokRecord = StokProduk::withTrashed()->where('produk_id', $detail->produk_id)->first();
 
                     if ($stokRecord) {
                         $stokLama = $stokRecord->jumlah;
@@ -126,14 +182,16 @@ class HasilProduksiController extends Controller
                             'stok_sebelum' => $stokLama,
                             'stok_sesudah' => $stokBaru,
                             'sumber' => 'produksi',
-                            'keterangan' => "Pembatalan Produksi #{$hasil->kode_produksi}",
+                            'keterangan' => "Pembatalan Produksi #{$hasil->kode_produksi} (Revert Stok)",
                             'user_id' => auth()->id()
                         ]);
                     }
                 }
             }
 
-            $hasil->delete(); // Ini akan menghapus detail jika Anda menggunakan onDelete('cascade') di DB
+            // Jika HasilProduksi juga menggunakan SoftDeletes, data tidak hilang permanen
+            $hasil->delete();
+
             DB::commit();
             return back()->with('success', 'Data berhasil dibatalkan dan stok telah disesuaikan.');
         } catch (\Exception $e) {
@@ -144,7 +202,11 @@ class HasilProduksiController extends Controller
 
     public function show($id)
     {
-        $hasil = HasilProduksi::with(['details.produk', 'user'])->findOrFail($id);
+        // Pastikan eager loading menggunakan withTrashed()
+        $hasil = HasilProduksi::with(['details.produk' => function ($q) {
+            $q->withTrashed();
+        }, 'user'])->findOrFail($id);
+
         $title = 'Detail Hasil Produksi ' . $hasil->kode_produksi;
         return view('admin.hasil_produksi.show', compact('hasil', 'title'));
     }

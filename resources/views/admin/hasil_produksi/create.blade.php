@@ -59,14 +59,14 @@
                                 {{ $p->nama }}
                             </div>
 
-                            <div class="flex justify-between items-center mt-1">
+                            {{-- <div class="flex justify-between items-center mt-1">
                                 <div class="text-slate-500 text-[10px] italic">Sat: {{ $p->satuan }}</div>
                                 <div class="text-[9px] px-1 bg-slate-100 rounded text-slate-600 uppercase">{{ $p->jenis }}</div>
-                            </div>
+                            </div> --}}
 
                             <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
                                 <div class="text-xs font-bold">
-                                    Stok: <span class="text-primary">{{ (float) $stokSekarang }}</span>
+                                    Stok: <span class="text-primary ">{{ (float) $stokSekarang }} {{ $p->satuan }}</span>
                                 </div>
                             </div>
                         </div>
@@ -163,7 +163,7 @@
             if (item.jenis === 'proses') {
                 polaHtml = `
                 <div class="mt-2">
-                    <label class="text-[10px] uppercase font-bold text-success">Kategori Pola</label>
+                    <label class="text-[10px] uppercase font-bold text-success"></label>
                     <select name="items[${index}][kategori_pola]" 
                             class="form-select form-select-sm mt-1" 
                             onchange="updatePola(${index}, this.value)">

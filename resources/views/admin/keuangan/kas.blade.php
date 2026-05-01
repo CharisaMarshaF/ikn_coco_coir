@@ -4,7 +4,8 @@
     <div class="intro-y flex flex-col sm:flex-row items-center mt-8">
         <h2 class="text-lg font-medium mr-auto">Kas Harian</h2>
         <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-            <button data-tw-toggle="modal" data-tw-target="#modal-tambah-kas" class="btn btn-primary shadow-md mr-2">Tambah Kas Manual</button>
+            <button data-tw-toggle="modal" data-tw-target="#modal-tambah-kas" class="btn btn-primary shadow-md mr-2">Tambah Kas
+                Manual</button>
         </div>
     </div>
 
@@ -30,7 +31,8 @@
             <div class="report-box zoom-in">
                 <div class="box p-5">
                     <div class="flex"><i data-lucide="trending-up" class="report-box__icon text-success"></i></div>
-                    <div class="text-3xl font-medium leading-8 mt-6">Rp {{ number_format($totalMasukBulanIni, 0, ',', '.') }}</div>
+                    <div class="text-3xl font-medium leading-8 mt-6">Rp
+                        {{ number_format($totalMasukBulanIni, 0, ',', '.') }}</div>
                     <div class="text-base text-slate-500 mt-1">Total Masuk (Bulan Ini)</div>
                 </div>
             </div>
@@ -39,7 +41,8 @@
             <div class="report-box zoom-in">
                 <div class="box p-5">
                     <div class="flex"><i data-lucide="trending-down" class="report-box__icon text-danger"></i></div>
-                    <div class="text-3xl font-medium leading-8 mt-6">Rp {{ number_format($totalKeluarBulanIni, 0, ',', '.') }}</div>
+                    <div class="text-3xl font-medium leading-8 mt-6">Rp
+                        {{ number_format($totalKeluarBulanIni, 0, ',', '.') }}</div>
                     <div class="text-base text-slate-500 mt-1">Total Keluar (Bulan Ini)</div>
                 </div>
             </div>
@@ -51,16 +54,18 @@
             <form action="{{ route('kas.index') }}" method="GET" class="flex flex-wrap items-center gap-3">
                 <div class="flex items-center gap-2">
                     <label class="whitespace-nowrap">Dari:</label>
-                    <input type="date" name="tgl_mulai" class="form-control box" value="{{ $tgl_mulai }}">
+                    <input type="date" name="tgl_mulai" class="form-control box"
+                        value="{{ $tgl_mulai ?? \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') }}">
                 </div>
                 <div class="flex items-center gap-2">
                     <label class="whitespace-nowrap">Sampai:</label>
-                    <input type="date" name="tgl_selesai" class="form-control box" value="{{ $tgl_selesai }}">
+                    <input type="date" name="tgl_selesai" class="form-control box"
+                        value="{{ $tgl_selesai ?? \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') }}">
                 </div>
                 <button type="submit" class="btn btn-secondary shadow-md">Filter</button>
-                
-                <a href="{{ route('kas.pdf', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai]) }}" 
-                   target="_blank" class="btn btn-outline-danger shadow-md ml-2">
+
+                <a href="{{ route('kas.pdf', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai]) }}" target="_blank"
+                    class="btn btn-outline-danger shadow-md ml-2">
                     <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Export PDF
                 </a>
             </form>
@@ -99,7 +104,8 @@
                                         <span class="text-danger font-medium uppercase italic">Uang Keluar</span>
                                     @endif
                                 </td>
-                                <td class="text-right font-bold {{ $k->jenis == 'masuk' ? 'text-success' : 'text-danger' }}">
+                                <td
+                                    class="text-right font-bold {{ $k->jenis == 'masuk' ? 'text-success' : 'text-danger' }}">
                                     {{ $k->jenis == 'masuk' ? '+' : '-' }} Rp
                                     {{ number_format($k->total_nominal, 0, ',', '.') }}
                                 </td>
@@ -111,7 +117,8 @@
                                         </a>
                                     </div>
 
-                                    <div id="delete-confirmation-modal-{{ $k->id }}" class="modal" tabindex="-1" aria-hidden="true">
+                                    <div id="delete-confirmation-modal-{{ $k->id }}" class="modal" tabindex="-1"
+                                        aria-hidden="true">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
                                                 <div class="modal-body p-0">
@@ -119,17 +126,22 @@
                                                         @csrf
                                                         @method('DELETE')
                                                         <div class="p-5 text-center">
-                                                            <i data-lucide="x-circle" class="w-16 h-16 text-danger mx-auto mt-3"></i>
+                                                            <i data-lucide="x-circle"
+                                                                class="w-16 h-16 text-danger mx-auto mt-3"></i>
                                                             <div class="text-3xl mt-5">Batalkan Data Kas?</div>
                                                             <div class="text-slate-500 mt-2">
                                                                 Apakah Anda yakin ingin membatalkan data kas sebesar
-                                                                <b class="text-danger">Rp {{ number_format($k->total_nominal, 0, ',', '.') }}</b>?
-                                                                <br>Saldo pada rekening <b>{{ $k->rekening->nama }}</b> akan dikembalikan secara otomatis.
+                                                                <b class="text-danger">Rp
+                                                                    {{ number_format($k->total_nominal, 0, ',', '.') }}</b>?
+                                                                <br>Saldo pada rekening <b>{{ $k->rekening->nama }}</b>
+                                                                akan dikembalikan secara otomatis.
                                                             </div>
                                                         </div>
                                                         <div class="px-5 pb-8 text-center">
-                                                            <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24 mr-1">Batal</button>
-                                                            <button type="submit" class="btn btn-danger w-24">Batalkan</button>
+                                                            <button type="button" data-tw-dismiss="modal"
+                                                                class="btn btn-outline-secondary w-24 mr-1">Batal</button>
+                                                            <button type="submit"
+                                                                class="btn btn-danger w-24">Batalkan</button>
                                                         </div>
                                                     </form>
                                                 </div>
@@ -161,13 +173,15 @@
                             <select name="rekening_id" class="form-select" required>
                                 <option value="">-- Pilih Rekening --</option>
                                 @foreach ($rekenings as $rek)
-                                    <option value="{{ $rek->id }}">{{ $rek->nama }} (Saldo: Rp {{ number_format($rek->saldo, 0, ',', '.') }})</option>
+                                    <option value="{{ $rek->id }}">{{ $rek->nama }} (Saldo: Rp
+                                        {{ number_format($rek->saldo, 0, ',', '.') }})</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-span-12 sm:col-span-6">
                             <label class="form-label">Tanggal</label>
-                            <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}"
+                                required>
                         </div>
                         <div class="col-span-12 sm:col-span-6">
                             <label class="form-label">Jenis Kas</label>
@@ -178,7 +192,8 @@
                         </div>
                         <div class="col-span-12">
                             <label class="form-label">Kategori</label>
-                            <select name="kategori" id="kategori_select" class="form-select" onchange="toggleKategori(this.value)" required>
+                            <select name="kategori" id="kategori_select" class="form-select"
+                                onchange="toggleKategori(this.value)" required>
                                 <option value="modal">Modal/Flat</option>
                                 <option value="operasional">Operasional (Detail Item)</option>
                             </select>
@@ -187,7 +202,8 @@
                         {{-- Input Modal/Flat --}}
                         <div class="col-span-12" id="input-modal-container">
                             <label class="form-label">Nominal Total</label>
-                            <input type="text" id="nominal_mask" class="form-control rupiah-input" placeholder="Contoh: 500.000">
+                            <input type="text" id="nominal_mask" class="form-control rupiah-input"
+                                placeholder="Contoh: 500.000">
                             <input type="hidden" name="nominal" id="nominal_actual">
                         </div>
 
@@ -197,20 +213,24 @@
                             <div id="item-list">
                                 <div class="grid grid-cols-12 gap-2 mb-2 item-row items-center">
                                     <div class="col-span-5">
-                                        <input type="text" name="items[0][nama_item]" class="form-control" placeholder="Nama Barang">
+                                        <input type="text" name="items[0][nama_item]" class="form-control"
+                                            placeholder="Nama Barang">
                                     </div>
                                     <div class="col-span-2">
-                                        <input type="number" name="items[0][jumlah]" class="form-control qty-input" placeholder="Jml" value="1" oninput="calculateTotal()">
+                                        <input type="number" name="items[0][jumlah]" class="form-control qty-input"
+                                            placeholder="Jml" value="1" oninput="calculateTotal()">
                                     </div>
                                     <div class="col-span-4">
-                                        <input type="text" class="form-control rupiah-input price-input" placeholder="Harga" oninput="calculateTotal()">
+                                        <input type="text" class="form-control rupiah-input price-input"
+                                            placeholder="Harga" oninput="calculateTotal()">
                                         <input type="hidden" name="items[0][harga]" class="actual-price">
                                     </div>
                                     <div class="col-span-1"></div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addRow()">+ Tambah Item</button>
-                            
+                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addRow()">+
+                                Tambah Item</button>
+
                             <!-- Preview Subtotal -->
                             <div class="mt-4 p-3 bg-slate-100 rounded-lg flex justify-between items-center">
                                 <span class="font-semibold">Total Keseluruhan: </span>
@@ -224,7 +244,8 @@
                         </div>
                     </div>
                     <div class="modal-footer text-right">
-                        <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-20 mr-1">Batal</button>
+                        <button type="button" data-tw-dismiss="modal"
+                            class="btn btn-outline-secondary w-20 mr-1">Batal</button>
                         <button type="submit" class="btn btn-primary w-20">Simpan</button>
                     </div>
                 </form>
@@ -236,7 +257,7 @@
         let rowIdx = 1;
 
         // Fungsi Format Rupiah Real-time
-        document.addEventListener('input', function (e) {
+        document.addEventListener('input', function(e) {
             if (e.target.classList.contains('rupiah-input')) {
                 let value = e.target.value.replace(/[^,\d]/g, '');
                 let split = value.split(',');
@@ -257,7 +278,7 @@
                 if (actualInput) {
                     actualInput.value = value;
                 }
-                
+
                 calculateTotal();
             }
         });
@@ -298,7 +319,7 @@
         function calculateTotal() {
             let grandTotal = 0;
             const rows = document.querySelectorAll('.item-row');
-            
+
             rows.forEach(row => {
                 const qty = parseFloat(row.querySelector('.qty-input').value) || 0;
                 const price = parseFloat(row.querySelector('.actual-price').value) || 0;

@@ -47,36 +47,36 @@
                     </div>
                 </div>
 
-<div class="grid grid-cols-12 gap-3 mt-5" id="bahanList">
-    @foreach ($bahan as $b)
-        @php $jmlStok = $b->stok->jumlah ?? 0; @endphp
-        
-        <div class="item-bahan col-span-6 sm:col-span-4 lg:col-span-3 box p-3 cursor-pointer zoom-in relative border-2 border-transparent hover:border-primary"
-            data-nama="{{ strtolower($b->nama) }}"
-            onclick="addItem({{ $b->id }}, '{{ $b->nama }}', '{{ $b->satuan }}')">
+                <div class="grid grid-cols-12 gap-3 mt-5" id="bahanList">
+                    @foreach ($bahan as $b)
+                        @php $jmlStok = $b->stok->jumlah ?? 0; @endphp
+                        
+                        <div class="item-bahan col-span-6 sm:col-span-4 lg:col-span-3 box p-3 cursor-pointer zoom-in relative border-2 border-transparent hover:border-primary"
+                            data-nama="{{ strtolower($b->nama) }}"
+                            onclick="addItem({{ $b->id }}, '{{ $b->nama }}', '{{ $b->satuan }}')">
 
-            <div class="absolute top-0 right-0 mr-1 mt-1 bg-primary/10 text-primary rounded-full p-0.5">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i>
-            </div>
+                            <div class="absolute top-0 right-0 mr-1 mt-1 bg-primary/10 text-primary rounded-full p-0.5">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            </div>
 
-            <div class="font-bold text-sm text-slate-700 truncate pr-5" title="{{ $b->nama }}">
-                {{ $b->nama }}
-            </div>
-            
-            <div class="text-slate-500 text-xs mt-1">
-                Satuan: <span class="font-medium italic text-slate-600">{{ $b->satuan }}</span>
-            </div>
+                            <div class="font-bold text-sm text-slate-700 truncate pr-5" title="{{ $b->nama }}">
+                                {{ $b->nama }}
+                            </div>
+                            
+                            {{-- <div class="text-slate-500 text-xs mt-1">
+                                Satuan: <span class="font-medium italic text-slate-600">{{ $b->satuan }}</span>
+                            </div> --}}
 
-            <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
-                <div class="text-xs font-bold">
-                    Stok : <span class="text-xs font-bold {{ $jmlStok <= 5 ? 'text-danger' : 'text-success' }}">
-                        {{ (float) $jmlStok }} {{ $b->satuan }}
-                    </span>
+                            <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
+                                <div class="text-xs font-bold">
+                                    Stok : <span class="text-xs font-bold {{ $jmlStok <= 5 ? 'text-danger' : 'text-success' }}">
+                                        {{ (float) $jmlStok }} {{ $b->satuan }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-            </div>
-        </div>
-    @endforeach
-</div>
             </div>
 
             <div class="col-span-12 lg:col-span-4">

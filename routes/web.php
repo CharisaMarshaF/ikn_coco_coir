@@ -82,6 +82,13 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
         Route::post('/store', [PengambilanBahanController::class, 'store'])->name('store');     // Proses Simpan
         Route::delete('/{id}', [PengambilanBahanController::class, 'destroy'])->name('destroy'); // Proses Hapus (Revert Stok)
     });
+    // Hasil Produksi
+// Pastikan name() sesuai dengan yang dipanggil di view
+// Tambahkan ini di web.php
+Route::get('hasil-produksi/cetak', [HasilProduksiController::class, 'cetakLaporan'])->name('hasil-produksi.cetak');
+
+// Baru kemudian resource (jika ada)
+Route::resource('hasil-produksi', HasilProduksiController::class);
     Route::prefix('hasil-produksi')->name('hasil-produksi.')->group(function () {
         Route::get('/', [HasilProduksiController::class, 'index'])->name('index');
         Route::get('/create', [HasilProduksiController::class, 'create'])->name('create');
@@ -90,4 +97,9 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
         Route::get('/{id}', [HasilProduksiController::class, 'show'])->name('show');
     });
 Route::get('/pengambilan/pdf', [PengambilanBahanController::class, 'cetakPdf'])->name('pengambilan.pdf');
+Route::get('pembelian/pdf', [PembelianController::class, 'cetakPDF'])->name('pembelian.pdf');
+// Pengambilan Bahan
+Route::get('pengambilan/cetak', [PengambilanBahanController::class, 'cetakPdf'])->name('pengambilan.cetak');
+
+
 });

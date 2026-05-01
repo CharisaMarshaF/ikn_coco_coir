@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\HasMany; // PENTING: Tambahkan ini
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes; // 1. Import trait
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes; // 2. Gunakan trait
 
     /**
      * Atribut yang dapat diisi (Mass Assignable).
@@ -19,7 +20,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role', // Pastikan role ada di sini agar bisa disimpan ke DB
+        'role', 
     ];
 
     /**
@@ -47,5 +48,11 @@ class User extends Authenticatable
     public function log(): HasMany
     {
         return $this->hasMany(LogAktivitas::class);
+    }
+
+    // Tips Tambahan: Relasi ke transaksi yang dilakukan user
+    public function hasilProduksi(): HasMany
+    {
+        return $this->hasMany(HasilProduksi::class);
     }
 }

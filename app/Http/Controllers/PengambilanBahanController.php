@@ -13,60 +13,67 @@ use Illuminate\Support\Facades\DB;
 
 class PengambilanBahanController extends Controller
 {
-public function index(Request $request)
+    public function index(Request $request)
     {
         $dari = $request->get('dari');
         $sampai = $request->get('sampai');
 
-        $pengambilan = PengambilanBahan::with(['details.bahan'])
-            ->when($dari && $sampai, function($query) use ($dari, $sampai) {
-                $query->whereBetween('tanggal', [$dari, $sampai]);
-            })
-            ->latest()
-            ->paginate(10);
+        $query = PengambilanBahan::with(['details.bahan' => function ($q) {
+            $q->withTrashed();
+        }]);
+
+        // Jika user melakukan filter tanggal manual
+        if ($dari && $sampai) {
+            $query->whereBetween('tanggal', [$dari, $sampai]);
+        } else {
+            // Default: Tampilkan hanya bulan ini
+            $query->whereMonth('tanggal', date('m'))
+                ->whereYear('tanggal', date('Y'));
+        }
+
+        // Mengurutkan dari yang paling baru (berdasarkan tanggal dan ID)
+        $pengambilan = $query->latest('tanggal')
+            ->latest('id')
+            ->paginate(10)
+            ->withQueryString();
 
         $title = 'Data Pengambilan Bahan';
         return view('admin.pengambilan.index', compact('pengambilan', 'title', 'dari', 'sampai'));
     }
-
 public function cetakPdf(Request $request)
 {
-    $dari = $request->get('dari');
-    $sampai = $request->get('sampai');
+    // Menggunakan Carbon untuk tanggal default
+    $dari = $request->get('dari') ?? \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
+    $sampai = $request->get('sampai') ?? \Carbon\Carbon::now()->format('Y-m-d');
 
-    // 1. Inisialisasi Query
-    $query = PengambilanBahanDetail::with(['bahan', 'pengambilan']);
-    
-    // 2. Tambahkan filter HANYA JIKA input tanggal ada
-    if ($dari && $sampai) {
-        $query->whereHas('pengambilan', function($q) use ($dari, $sampai) {
+    // Query Detail agar lebih mudah menampilkan list per item di PDF
+    $data = PengambilanBahanDetail::with(['bahan' => function ($q) {
+            $q->withTrashed(); 
+        }, 'pengambilan'])
+        ->whereHas('pengambilan', function($q) use ($dari, $sampai) {
             $q->whereBetween('tanggal', [$dari, $sampai]);
-        });
-    }
+        })
+        ->get();
 
-    // 3. Ambil data (Sekarang $data pasti terdefinisi, baik terfilter maupun tidak)
-    $data = $query->get();
-
-    // 4. Hitung Ringkasan / Subtotal dari hasil $data di atas
+    // Summary akumulasi per bahan
     $summary = $data->groupBy('bahan_id')->map(function ($items) {
+        $bahan = $items->first()->bahan;
         return [
-            'nama' => $items->first()->bahan->nama ?? 'Bahan Dihapus',
-            'satuan' => $items->first()->bahan->satuan ?? '',
+            'nama' => $bahan ? ($bahan->trashed() ? $bahan->nama . ' (Dihapus)' : $bahan->nama) : 'Bahan Tidak Ditemukan',
+            'satuan' => $bahan->satuan ?? '-',
             'total_qty' => $items->sum('qty')
         ];
     });
 
-    // 5. Load View PDF
-    $pdf = Pdf::loadView('admin.pengambilan.pdf', compact('data', 'summary', 'dari', 'sampai'));
-    
-    // 6. Penamaan File yang aman (Tanpa karakter / atau \)
-    if ($dari && $sampai) {
-        $filename = "Laporan_Pengambilan_" . $dari . "_sd_" . $sampai . ".pdf";
-    } else {
-        $filename = "Semua_Laporan_Pengambilan.pdf";
-    }
+    $pdf = Pdf::loadView('admin.pengambilan.pdf', [
+        'data' => $data,
+        'summary' => $summary,
+        'dari' => $dari,
+        'sampai' => $sampai,
+        'konfigurasi' => \App\Models\CompanyProfile::first()
+    ])->setPaper('a4', 'portrait');
 
-    return $pdf->stream($filename);
+    return $pdf->stream("Laporan_Pengambilan_{$dari}_sd_{$sampai}.pdf");
 }
     public function create()
     {
@@ -145,13 +152,18 @@ public function cetakPdf(Request $request)
         try {
             DB::transaction(function () use ($id) {
                 $pengambilan = PengambilanBahan::findOrFail($id);
+
                 foreach ($pengambilan->details as $detail) {
+                    // Gunakan withTrashed() agar stok tetap bisa dikembalikan 
+                    // meskipun bahan bakunya sendiri sudah dihapus dari master data
                     $stok = StokBahan::where('bahan_id', $detail->bahan_id)->first();
+
                     if ($stok) {
                         $stokLama = $stok->jumlah;
                         $stokBaru = $stokLama + $detail->qty;
                         $stok->update(['jumlah' => $stokBaru]);
 
+                        // Catat Log
                         StockLog::create([
                             'item_id' => $detail->bahan_id,
                             'item_type' => 'bahan_baku',
@@ -165,13 +177,16 @@ public function cetakPdf(Request $request)
                         ]);
                     }
                 }
+                // Ini akan melakukan Soft Delete jika trait SoftDeletes ada di model
                 $pengambilan->delete();
             });
+
             return redirect()->back()->with('success', 'Data berhasil dihapus dan stok dikembalikan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal: ' . $e->getMessage());
         }
     }
+
     public function laporan(Request $request)
     {
         $dari = $request->get('dari');

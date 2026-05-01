@@ -95,11 +95,8 @@ class BahanBakuController extends Controller
     public function destroy($id)
     {
         $bahan = BahanBaku::findOrFail($id);
-        DB::transaction(function () use ($bahan) {
-            $bahan->stok()->delete();
-            $bahan->delete();
-        });
+        $bahan->delete(); 
 
-        return redirect()->back()->with('success', 'Bahan baku berhasil dihapus');
+        return redirect()->back()->with('success', 'Bahan baku berhasil dipindahkan ke sampah');
     }
 }

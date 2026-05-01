@@ -1,6 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
+    @if (session('success'))
+        <div class="alert alert-success show flex items-center mb-2 mt-5" role="alert">
+            <i data-lucide="check-circle" class="w-6 h-6 mr-2"></i> {{ session('success') }}
+        </div>
+    @endif
+
+    @if (session('error') || $errors->any())
+        <div class="alert alert-danger show flex items-center mb-2 mt-5" role="alert">
+            <i data-lucide="alert-octagon" class="w-6 h-6 mr-2"></i>
+            @if (session('error'))
+                {{ session('error') }}
+            @else
+                Cek kembali inputan Anda.
+            @endif
+        </div>
+    @endif
 <div class="grid grid-cols-12 gap-6 mt-5">
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
         <button data-tw-toggle="modal" data-tw-target="#modal-tambah-rekening" class="btn btn-primary shadow-md mr-2">Tambah Rekening</button>

@@ -53,7 +53,7 @@
                     <thead>
                         <tr>
                             <th class="whitespace-nowrap">PRODUK & POLA</th>
-                            <th class="whitespace-nowrap text-center">JENIS</th>
+                            <th class="whitespace-nowrap text-center">HASIL</th>
                             <th class="whitespace-nowrap text-right">QTY MASUK</th>
                             <th class="whitespace-nowrap text-center">STATUS STOK</th>
                         </tr>
@@ -64,18 +64,16 @@
                             <td class="!py-4">
                                 <div class="font-medium whitespace-nowrap">{{ $detail->produk->nama }}</div>
                                 <!-- Kategori Pola ditaruh di bawah nama produk sebagai badge -->
-                                <div class="mt-1">
-                                    @if($detail->kategori_pola)
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $detail->kategori_pola == 'Jadi' ? 'bg-success/10 text-success border border-success/20' : 'bg-warning/10 text-warning border border-warning/20' }}">
+                                
+                            </td>
+                            <td class="text-center">
+                                <div class="text-xs text-slate-500">@if($detail->kategori_pola)
+                                        <span class=" text-[10px] font-bold {{ $detail->kategori_pola == 'Jadi' ? 'bg-success/10 text-success ' : 'bg-warning/10 text-warning ' }}">
                                             Pola: {{ $detail->kategori_pola }}
                                         </span>
                                     @else
                                         <span class="text-slate-400 text-[10px] italic">Tanpa Pola</span>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <div class="text-xs text-slate-500">{{ ucfirst($detail->produk->jenis) }}</div>
+                                    @endif</div>
                             </td>
                             <td class="text-right font-bold text-success">
                                 {{ number_format($detail->qty, 0, ',', '.') }}

@@ -54,8 +54,20 @@ class RekeningController extends Controller
     public function destroy($id)
     {
         $rekening = Rekening::findOrFail($id);
-        $rekening->delete();
+        
+        // Proteksi: Jangan hapus jika saldo masih ada (Opsional)
+        if ($rekening->saldo != 0) {
+            return redirect()->back()->with('error', 'Rekening dengan saldo aktif tidak boleh dihapus. Kosongkan saldo terlebih dahulu.');
+        }
 
-        return redirect()->back()->with('success', 'Rekening berhasil dihapus.');
+        $rekening->delete(); // Melakukan Soft Delete
+
+        return redirect()->back()->with('success', 'Rekening berhasil dinonaktifkan (Soft Delete).');
+    }
+
+    public function restore($id)
+    {
+        Rekening::withTrashed()->findOrFail($id)->restore();
+        return redirect()->back()->with('success', 'Rekening berhasil diaktifkan kembali.');
     }
 }

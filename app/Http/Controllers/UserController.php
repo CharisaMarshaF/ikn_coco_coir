@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
     public function index()
     {
+        // Hanya menampilkan user yang masih aktif
         $users = User::latest()->paginate(10);
         $title = 'Data User';
         return view('admin.users', compact('users', 'title'));
@@ -23,7 +25,12 @@ class UserController extends Controller
 
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:users,email',
+            // Validasi email agar mengecek data yang di-soft delete juga
+            'email' => [
+                'required', 
+                'email', 
+                Rule::unique('users')->whereNull('deleted_at')
+            ],
             'password' => 'required|min:6',
             'role' => 'required|in:admin,staff',
         ]);
@@ -48,7 +55,11 @@ class UserController extends Controller
         
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => [
+                'required', 
+                'email', 
+                Rule::unique('users')->ignore($id)->whereNull('deleted_at')
+            ],
             'role' => 'required|in:admin,staff',
         ]);
 
@@ -70,7 +81,25 @@ class UserController extends Controller
         if (auth()->user()->role !== 'admin') {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses.');
         }
-        User::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'User berhasil dihapus');
+
+        // PROTEKSI: Jangan biarkan admin menghapus dirinya sendiri
+        if (auth()->id() == $id) {
+            return redirect()->back()->with('error', 'Anda tidak bisa menghapus akun Anda sendiri.');
+        }
+
+        $user = User::findOrFail($id);
+        $user->delete(); // Ini melakukan Soft Delete
+
+        return redirect()->back()->with('success', 'User berhasil dinonaktifkan.');
+    }
+
+    /**
+     * Opsional: Fitur untuk melihat user yang sudah dihapus
+     */
+    public function trashed()
+    {
+        $users = User::onlyTrashed()->latest()->paginate(10);
+        $title = 'Arsip User (Non-Aktif)';
+        return view('admin.users_trashed', compact('users', 'title'));
     }
 }

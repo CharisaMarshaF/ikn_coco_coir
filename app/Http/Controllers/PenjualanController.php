@@ -20,15 +20,23 @@ class PenjualanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Penjualan::with('client')->orderBy('tanggal', 'desc')->orderBy('created_at', 'desc');
+        $query = Penjualan::with(['client' => function($q) {
+                $q->withTrashed();
+            }])
+            // Filter untuk hanya menampilkan data bulan ini
+            ->whereMonth('tanggal', date('m'))
+            ->whereYear('tanggal', date('Y'))
+            // Urutkan berdasarkan tanggal terbaru, lalu waktu input terbaru
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('created_at', 'desc');
 
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('id', 'like', "%{$search}%")
-                  ->orWhereHas('client', function($qc) use ($search) {
-                      $qc->where('nama', 'like', "%{$search}%");
-                  });
+                ->orWhereHas('client', function($qc) use ($search) {
+                    $qc->where('nama', 'like', "%{$search}%");
+                });
             });
         }
 
@@ -37,7 +45,8 @@ class PenjualanController extends Controller
         }
 
         $penjualan = $query->paginate(10)->withQueryString();
-        $title = 'Data Penjualan';
+        $title = 'Data Penjualan Bulan Ini';
+
         return view('admin.penjualan.index', compact('penjualan', 'title'));
     }
 
@@ -136,133 +145,140 @@ class PenjualanController extends Controller
         }
     }
     // Menampilkan Detail
+    // Contoh pada fungsi show
     public function show($id)
     {
-        $penjualan = Penjualan::with(['client', 'detail.produk'])->findOrFail($id);
+        $penjualan = Penjualan::with([
+            'client' => function($q) { $q->withTrashed(); },
+            'detail.produk' => function($q) { $q->withTrashed(); } // TAMBAHKAN INI
+        ])->findOrFail($id);
+        
         $title = 'Detail Penjualan';
         return view('admin.penjualan.show', compact('penjualan', 'title'));
     }
 
-// Logika CANCEL (Stok kembali semua)
     public function cancel($id)
     {
         try {
             DB::beginTransaction();
+            
+            // Ambil data penjualan beserta detailnya
             $penjualan = Penjualan::with('detail')->findOrFail($id);
 
+            // Proteksi: Hanya transaksi yang sudah berhasil yang bisa dicancel
             if ($penjualan->status != 'berhasil') {
-                throw new \Exception("Hanya transaksi 'Berhasil' yang dapat dibatalkan.");
+                throw new \Exception("Hanya transaksi dengan status 'berhasil' yang dapat dibatalkan.");
             }
 
             foreach ($penjualan->detail as $item) {
-                $stokRecord = StokProduk::where('produk_id', $item->produk_id)->first();
+                // PENTING: Gunakan withTrashed() agar stok tetap bisa diupdate 
+                // meskipun produknya sudah di-soft delete
+                $stokRecord = StokProduk::withTrashed()->where('produk_id', $item->produk_id)->first();
+                
                 $stokLama = $stokRecord->jumlah ?? 0;
 
-                // Kembalikan stok
+                // 1. Kembalikan stok fisik menggunakan Helper
                 StokHelper::updateStokProduk($item->produk_id, $item->qty);
 
-                // Log: Masuk (karena pembatalan jual)
+                // 2. Catat riwayat ke StockLog
                 StockLog::create([
-                    'item_id' => $item->produk_id,
-                    'item_type' => 'produk',
-                    'jenis' => 'masuk',
-                    'jumlah' => $item->qty,
+                    'item_id'      => $item->produk_id,
+                    'item_type'    => 'produk',
+                    'jenis'        => 'masuk',
+                    'jumlah'       => $item->qty,
                     'stok_sebelum' => $stokLama,
                     'stok_sesudah' => $stokLama + $item->qty,
-                    'sumber' => 'pembatalan', // Pastikan 'pembatalan' ada di Enum DB Anda
-                    'keterangan' => "Pembatalan Penjualan #{$penjualan->id}",
-                    'user_id' => auth()->id()
+                    'sumber'       => 'pembatalan', 
+                    'keterangan'   => "Pembatalan Penjualan #{$penjualan->id}",
+                    'user_id'      => auth()->id()
                 ]);
             }
 
+            // 3. Update status penjualan
             $penjualan->update(['status' => 'cancel']);
 
             DB::commit();
-            return back()->with('success', 'Transaksi dibatalkan & stok dikembalikan.');
+            return back()->with('success', 'Transaksi berhasil dibatalkan dan stok telah dikembalikan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', 'Gagal membatalkan transaksi: ' . $e->getMessage());
         }
     }
+    public function return(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
 
-// Logika RETURN (Stok kembali sebagian sesuai pilihan)
-public function return(Request $request, $id)
-{
-    try {
-        DB::beginTransaction();
-        $penjualan = Penjualan::with('detail')->findOrFail($id);
-        $totalBaru = 0;
+            $penjualan = Penjualan::with('detail')->findOrFail($id);
 
-        foreach ($request->items as $itemData) {
-            $qtyReturn = (float)$itemData['qty_return'];
+            foreach ($request->items as $itemData) {
+                $qtyReturn = (float)$itemData['qty_return'];
 
-            if ($qtyReturn > 0) {
-                // 1. Cari detail penjualan yang sesuai
-                $detail = PenjualanDetail::where('penjualan_id', $id)
-                    ->where('produk_id', $itemData['produk_id'])
-                    ->first();
+                // Hanya proses jika jumlah return lebih dari 0
+                if ($qtyReturn > 0) {
+                    // Cari detail penjualan terkait
+                    $detail = PenjualanDetail::where('penjualan_id', $id)
+                        ->where('produk_id', $itemData['produk_id'])
+                        ->first();
 
-                if ($detail) {
-                    // Validasi: Jangan sampai return melebihi qty yang dibeli
-                    if ($qtyReturn > $detail->qty) {
-                        throw new \Exception("Jumlah return produk {$detail->produk->nama} melebihi jumlah pembelian.");
+                    if ($detail) {
+                        // Validasi agar tidak return melebihi yang dibeli
+                        if ($qtyReturn > $detail->qty) {
+                            throw new \Exception("Jumlah return untuk produk ID {$itemData['produk_id']} melebihi jumlah pembelian.");
+                        }
+
+                        // PENTING: Cari stok dengan withTrashed()
+                        $stokRecord = StokProduk::withTrashed()->where('produk_id', $itemData['produk_id'])->first();
+                        $stokLama = $stokRecord->jumlah ?? 0;
+
+                        // 1. Kembalikan stok ke gudang
+                        StokHelper::updateStokProduk($itemData['produk_id'], $qtyReturn);
+
+                        // 2. Update Qty di Detail Penjualan (dikurangi)
+                        $qtySisa = $detail->qty - $qtyReturn;
+                        $detail->update([
+                            'qty'      => $qtySisa,
+                            'subtotal' => $qtySisa * $detail->harga
+                        ]);
+
+                        // 3. Catat StockLog
+                        StockLog::create([
+                            'item_id'      => $itemData['produk_id'],
+                            'item_type'    => 'produk',
+                            'jenis'        => 'masuk',
+                            'jumlah'       => $qtyReturn,
+                            'stok_sebelum' => $stokLama,
+                            'stok_sesudah' => $stokLama + $qtyReturn,
+                            'sumber'       => 'manual', 
+                            'keterangan'   => "Return barang dari Penjualan #{$penjualan->id}",
+                            'user_id'      => auth()->id()
+                        ]);
                     }
-
-                    // 2. Ambil stok lama untuk Logging
-                    $stokRecord = StokProduk::where('produk_id', $itemData['produk_id'])->first();
-                    $stokLama = $stokRecord->jumlah ?? 0;
-
-                    // 3. Kembalikan stok fisik ke gudang
-                    StokHelper::updateStokProduk($itemData['produk_id'], $qtyReturn);
-
-                    // 4. Update data Detail Penjualan (KURANGI QTY)
-                    $qtySisa = $detail->qty - $qtyReturn;
-                    $detail->update([
-                        'qty' => $qtySisa,
-                        'subtotal' => $qtySisa * $detail->harga
-                    ]);
-
-                    // Jika qty jadi 0 setelah return, opsional: hapus detail atau biarkan 0
-                    // if ($qtySisa <= 0) { $detail->delete(); }
-
-                    // 5. Catat ke StockLog
-                    StockLog::create([
-                        'item_id' => $itemData['produk_id'],
-                        'item_type' => 'produk',
-                        'jenis' => 'masuk',
-                        'jumlah' => $qtyReturn,
-                        'stok_sebelum' => $stokLama,
-                        'stok_sesudah' => $stokLama + $qtyReturn,
-                        'sumber' => 'manual', 
-                        'keterangan' => "Return Produk dari Penjualan #{$penjualan->id}",
-                        'user_id' => auth()->id()
-                    ]);
                 }
             }
+
+            // 4. Hitung ulang total penjualan dari sisa detail yang ada
+            $totalBaru = PenjualanDetail::where('penjualan_id', $id)->sum('subtotal');
+
+            // 5. Update Header Penjualan
+            $penjualan->update([
+                'status'     => 'return',
+                'total'      => $totalBaru,
+                'keterangan' => $request->keterangan ?? "Proses return sebagian barang"
+            ]);
+
+            // 6. Sinkronkan dengan Invoice jika ada
+            if ($penjualan->invoice) {
+                $penjualan->invoice->update(['total' => $totalBaru]);
+            }
+
+            DB::commit();
+            return back()->with('success', 'Berhasil memproses return. Stok dan total tagihan telah diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal memproses return: ' . $e->getMessage());
         }
-
-        // 6. Hitung ulang Total Penjualan berdasarkan detail yang sudah diupdate
-        $totalBaru = PenjualanDetail::where('penjualan_id', $id)->sum('subtotal');
-
-        // 7. Update Header Penjualan (Status dan Total Tagihan Baru)
-        $penjualan->update([
-            'status' => 'return',
-            'total' => $totalBaru,
-            'keterangan' => $request->keterangan ?? "Return sebagian barang"
-        ]);
-
-        // 8. Update data Invoice (opsional, agar invoice sinkron dengan total baru)
-        if ($penjualan->invoice) {
-            $penjualan->invoice->update(['total' => $totalBaru]);
-        }
-
-        DB::commit();
-        return back()->with('success', 'Berhasil memproses return. Detail penjualan dan stok telah diperbarui.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', $e->getMessage());
     }
-}
     public function print($id)
     {
         $penjualan = Penjualan::with(['client', 'detail.produk', 'invoice', 'suratJalan'])->findOrFail($id);
