@@ -59,11 +59,6 @@
                                 {{ $p->nama }}
                             </div>
 
-                            {{-- <div class="flex justify-between items-center mt-1">
-                                <div class="text-slate-500 text-[10px] italic">Sat: {{ $p->satuan }}</div>
-                                <div class="text-[9px] px-1 bg-slate-100 rounded text-slate-600 uppercase">{{ $p->jenis }}</div>
-                            </div> --}}
-
                             <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
                                 <div class="text-xs font-bold">
                                     Stok: <span class="text-primary ">{{ (float) $stokSekarang }} {{ $p->satuan }}</span>
@@ -103,42 +98,52 @@
         </div>
     </form>
 
-   <script>
+<script>
     let cart = [];
 
     function addItem(id, name, unit, stock, type) {
-        const existing = cart.find(i => i.produk_id === id);
-        if (existing) {
+        // LOGIKA PERUBAHAN: 
+        // Jika jenisnya 'proses', biarkan user menambah produk yang sama berkali-kali 
+        // agar bisa memilih kategori_pola yang berbeda.
+        // Jika jenisnya 'jadi', baru lakukan increment qty.
+        
+        const existing = cart.find(i => i.produk_id === id && i.jenis === 'jadi');
+
+        if (existing && type === 'jadi') {
             existing.qty++;
         } else {
             cart.push({
+                unique_key: Date.now() + Math.random(), // ID unik untuk DOM/State
                 produk_id: id,
                 nama: name,
                 satuan: unit,
                 qty: 1,
                 jenis: type,
-                // PERBAIKAN: Berikan default value yang valid untuk semua jenis
                 kategori_pola: (type === 'proses') ? 'Bulat' : 'Jadi' 
             });
         }
         renderCart();
     }
 
-    function updateItem(index, value) {
+    function updateItem(uniqueKey, value) {
         let val = parseFloat(value) || 0;
         if (val < 0) val = 0;
-        cart[index].qty = val;
-        // Tidak perlu render ulang, cukup update total
-        updateTotalDisplay();
+        const index = cart.findIndex(item => item.unique_key == uniqueKey);
+        if (index !== -1) {
+            cart[index].qty = val;
+            updateTotalDisplay();
+        }
     }
 
-    function updatePola(index, value) {
-        // Update data di array agar sinkron saat form disubmit
-        cart[index].kategori_pola = value;
+    function updatePola(uniqueKey, value) {
+        const index = cart.findIndex(item => item.unique_key == uniqueKey);
+        if (index !== -1) {
+            cart[index].kategori_pola = value;
+        }
     }
 
-    function removeItem(index) {
-        cart.splice(index, 1);
+    function removeItem(uniqueKey) {
+        cart = cart.filter(item => item.unique_key != uniqueKey);
         renderCart();
     }
 
@@ -163,18 +168,16 @@
             if (item.jenis === 'proses') {
                 polaHtml = `
                 <div class="mt-2">
-                    <label class="text-[10px] uppercase font-bold text-success"></label>
+                    <label class="text-[10px] uppercase font-bold text-success">Pola Produksi</label>
                     <select name="items[${index}][kategori_pola]" 
                             class="form-select form-select-sm mt-1" 
-                            onchange="updatePola(${index}, this.value)">
+                            onchange="updatePola(${item.unique_key}, this.value)">
                         <option value="Bulat" ${item.kategori_pola === 'Bulat' ? 'selected' : ''}>Bulat</option>
                         <option value="Setengah_jadi" ${item.kategori_pola === 'Setengah_jadi' ? 'selected' : ''}>Setengah Jadi</option>
                         <option value="Jadi" ${item.kategori_pola === 'Jadi' ? 'selected' : ''}>Jadi</option>
                     </select>
                 </div>`;
             } else {
-                // PERBAIKAN: Jangan kirim string kosong. Kirim nilai 'Jadi' atau sesuai Enum database 
-                // agar kolom tidak NULL di MySQL.
                 polaHtml = `<input type="hidden" name="items[${index}][kategori_pola]" value="Jadi">`;
             }
 
@@ -185,7 +188,7 @@
                         <span class="font-bold text-slate-700">${item.nama}</span>
                         <span class="ml-1 text-[8px] px-1 bg-slate-200 rounded text-slate-500 uppercase">${item.jenis}</span>
                     </div>
-                    <button type="button" onclick="removeItem(${index})" class="text-danger ml-2">
+                    <button type="button" onclick="removeItem(${item.unique_key})" class="text-danger ml-2">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -197,7 +200,7 @@
                     <div class="input-group mt-1">
                         <input type="number" name="items[${index}][qty]" value="${item.qty}" 
                                min="0.01" step="any"
-                               oninput="updateItem(${index}, this.value)" class="form-control form-control-sm">
+                               oninput="updateItem(${item.unique_key}, this.value)" class="form-control form-control-sm">
                         <div class="input-group-text text-xs">${item.satuan}</div>
                     </div>
                 </div>

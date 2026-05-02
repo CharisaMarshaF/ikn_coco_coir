@@ -88,71 +88,70 @@ public function cetakLaporan(Request $request)
         return view('admin.hasil_produksi.create', compact('produkProses', 'title'));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'tanggal' => 'required|date',
-            'items' => 'required|array|min:1',
-            'items.*.produk_id' => 'required|exists:produk,id',
-            'items.*.qty' => 'required|numeric|min:0.01',
+public function store(Request $request)
+{
+    $request->validate([
+        'tanggal' => 'required|date',
+        'items' => 'required|array|min:1',
+        'items.*.produk_id' => 'required|exists:produk,id',
+        'items.*.qty' => 'required|numeric|min:0.01',
+    ]);
+
+    try {
+        DB::beginTransaction();
+
+        $hasil = HasilProduksi::create([
+            'tanggal' => $request->tanggal,
+            'kode_produksi' => 'HPR-' . date('YmdHis'),
+            'keterangan' => $request->keterangan,
+            'user_id' => auth()->id(),
         ]);
 
-        try {
-            DB::beginTransaction();
+        foreach ($request->items as $item) {
+            $produk = Produk::findOrFail($item['produk_id']);
+            $qtyMasuk = $item['qty'];
+            $itemPola = $item['kategori_pola'] ?? 'Jadi'; // Default fallback
 
-            $hasil = HasilProduksi::create([
-                'tanggal' => $request->tanggal,
-                'kode_produksi' => 'HPR-' . date('YmdHis'),
-                'keterangan' => $request->keterangan,
-                'user_id' => auth()->id(),
+            // 1. Simpan Detail (Akan tetap tersimpan meskipun produk_id sama, karena baris berbeda)
+            HasilProduksiDetail::create([
+                'hasil_produksi_id' => $hasil->id,
+                'produk_id' => $produk->id,
+                'qty' => $qtyMasuk,
+                'kategori_pola' => $itemPola
             ]);
 
-            foreach ($request->items as $item) {
-                $produk = Produk::findOrFail($item['produk_id']);
-                $qtyMasuk = $item['qty'];
-                $itemPola = $item['kategori_pola'] ?? null;
+            // 2. Update Stok: Hanya jika pola yang dihasilkan adalah 'Jadi'
+            if ($produk->jenis === 'jadi' || $itemPola === 'Jadi') {
+                $stokRecord = StokProduk::withTrashed()->firstOrCreate(
+                    ['produk_id' => $produk->id],
+                    ['jumlah' => 0]
+                );
 
-                // 1. Simpan Detail
-                HasilProduksiDetail::create([
-                    'hasil_produksi_id' => $hasil->id,
-                    'produk_id' => $produk->id,
-                    'qty' => $qtyMasuk,
-                    'kategori_pola' => $itemPola
+                $stokLama = $stokRecord->jumlah;
+                $stokBaru = $stokLama + $qtyMasuk;
+                $stokRecord->update(['jumlah' => $stokBaru]);
+
+                StockLog::create([
+                    'item_id' => $produk->id,
+                    'item_type' => 'produk',
+                    'jenis' => 'masuk',
+                    'jumlah' => $qtyMasuk,
+                    'stok_sebelum' => $stokLama,
+                    'stok_sesudah' => $stokBaru,
+                    'sumber' => 'produksi',
+                    'keterangan' => "Hasil Produksi #{$hasil->kode_produksi} (Pola: {$itemPola})",
+                    'user_id' => auth()->id()
                 ]);
-
-                // 2. Update Stok: Jika jenis 'jadi' ATAU pola 'Jadi'
-                if ($produk->jenis === 'jadi' || $itemPola === 'Jadi') {
-                    // Cari record stok (termasuk yang di-soft delete jika ada)
-                    $stokRecord = StokProduk::withTrashed()->firstOrCreate(
-                        ['produk_id' => $produk->id],
-                        ['jumlah' => 0]
-                    );
-
-                    $stokLama = $stokRecord->jumlah;
-                    $stokBaru = $stokLama + $qtyMasuk;
-                    $stokRecord->update(['jumlah' => $stokBaru]);
-
-                    StockLog::create([
-                        'item_id' => $produk->id,
-                        'item_type' => 'produk',
-                        'jenis' => 'masuk',
-                        'jumlah' => $qtyMasuk,
-                        'stok_sebelum' => $stokLama,
-                        'stok_sesudah' => $stokBaru,
-                        'sumber' => 'produksi',
-                        'keterangan' => "Hasil Produksi #{$hasil->kode_produksi} (Pola: {$itemPola})",
-                        'user_id' => auth()->id()
-                    ]);
-                }
             }
-
-            DB::commit();
-            return redirect()->route('hasil-produksi.index')->with('success', 'Hasil produksi berhasil dicatat.');
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()->withInput()->with('error', 'Gagal Simpan: ' . $e->getMessage());
         }
+
+        DB::commit();
+        return redirect()->route('hasil-produksi.index')->with('success', 'Hasil produksi berhasil dicatat.');
+    } catch (\Exception $e) {
+        DB::rollback();
+        return back()->withInput()->with('error', 'Gagal Simpan: ' . $e->getMessage());
     }
+}
 
     public function destroy($id)
     {
