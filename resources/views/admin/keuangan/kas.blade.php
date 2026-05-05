@@ -51,24 +51,47 @@
 
     <div class="grid grid-cols-12 gap-6 mt-5">
         <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
-            <form action="{{ route('kas.index') }}" method="GET" class="flex flex-wrap items-center gap-3">
-                <div class="flex items-center gap-2">
-                    <label class="whitespace-nowrap">Dari:</label>
-                    <input type="date" name="tgl_mulai" class="form-control box"
-                        value="{{ $tgl_mulai ?? \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') }}">
-                </div>
-                <div class="flex items-center gap-2">
-                    <label class="whitespace-nowrap">Sampai:</label>
-                    <input type="date" name="tgl_selesai" class="form-control box"
-                        value="{{ $tgl_selesai ?? \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') }}">
-                </div>
-                <button type="submit" class="btn btn-secondary shadow-md">Filter</button>
+<form action="{{ route('kas.index') }}" method="GET" id="filterForm" class="flex flex-wrap items-center gap-3">
+    <div class="flex items-center gap-2">
+        <label class="whitespace-nowrap">Rekening:</label>
+        <select name="rekening_id" class="form-control box" onchange="updatePdfLink()">
+            <option value="">Semua Rekening</option>
+            @foreach ($rekenings as $rek)
+                <option value="{{ $rek->id }}" {{ request('rekening_id') == $rek->id ? 'selected' : '' }}>
+                    {{ $rek->nama }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+    <div class="flex items-center gap-2">
+        <label class="whitespace-nowrap">Dari:</label>
+        <input type="date" name="tgl_mulai" id="filter_tgl_mulai" class="form-control box"
+            value="{{ $tgl_mulai }}" onchange="updatePdfLink()">
+    </div>
+    <div class="flex items-center gap-2">
+        <label class="whitespace-nowrap">Sampai:</label>
+        <input type="date" name="tgl_selesai" id="filter_tgl_selesai" class="form-control box"
+            value="{{ $tgl_selesai }}" onchange="updatePdfLink()">
+    </div>
+    
+    <button type="submit" class="btn btn-secondary shadow-md">Filter Tabel</button>
 
-                <a href="{{ route('kas.pdf', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai]) }}" target="_blank"
-                    class="btn btn-outline-danger shadow-md ml-2">
-                    <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Export PDF
-                </a>
-            </form>
+    <a id="btnExportPdf" href="{{ route('kas.pdf', request()->all()) }}" target="_blank"
+        class="btn btn-outline-danger shadow-md ml-2">
+        <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Export PDF
+    </a>
+</form>
+
+<script>
+// Script sederhana untuk memastikan link PDF selalu sinkron dengan inputan user
+function updatePdfLink() {
+    const form = document.getElementById('filterForm');
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData).toString();
+    const baseUrl = "{{ route('kas.pdf') }}";
+    document.getElementById('btnExportPdf').href = baseUrl + "?" + params;
+}
+</script>
         </div>
 
         <div class="intro-y col-span-12 p-5 bg-white rounded-lg shadow mt-5">

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Produk;
 use App\Models\Penjualan;
-use App\Models\KasHarian;
-use App\Models\Produksi; 
-use Illuminate\Support\Carbon;
+use App\Models\Produksi;
+use App\Models\StokProduk;
+use App\Models\ReturnPenjualan; // Tambahkan ini
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -16,40 +16,34 @@ class DashboardController extends Controller
         $now = Carbon::now();
         $today = Carbon::today();
 
-        // --- STATISTIK RINGKASAN ---
-        $totalProduk = Produk::count() ?? 0;
-
-        // Omset Hari Ini (Penjualan Berhasil)
-        $penjualanHariIni = Penjualan::whereDate('tanggal', $today)
-            ->where('status', 'berhasil')
+        $totalStok = StokProduk::sum('jumlah') ?? 0;
+        $produksiHariIni = Produksi::whereDate('tanggal', $today)->count();
+        $totalJualBulanIni = Penjualan::whereMonth('tanggal', $now->month)
+            ->whereYear('tanggal', $now->year)
+            ->whereIn('status', ['berhasil', 'return']) // Transaksi 'return' tetap dihitung omsetnya
             ->sum('total') ?? 0;
 
-        // Omset Bulan Ini (Penjualan Berhasil)
-        $penjualanBulanIni = Penjualan::whereMonth('tanggal', $now->month)
+        $totalReturnBulanIni = ReturnPenjualan::whereMonth('tanggal', $now->month)
             ->whereYear('tanggal', $now->year)
-            ->where('status', 'berhasil')
-            ->sum('total') ?? 0;
+            ->sum('total_refund') ?? 0;
 
-        // Pemasukan Kas Bulan Ini (Dari KasHarian)
-        $totalPemasukan = (float) KasHarian::whereMonth('tanggal', $now->month)
-            ->whereYear('tanggal', $now->year) 
-            ->where('jenis', 'masuk')
-            ->sum('total_nominal') ?? 0;
-
-        // Total Produksi Bulan Ini
-        $jumlahProduksiBulanIni = Produksi::whereMonth('tanggal', $now->month)
-            ->whereYear('tanggal', $now->year)
-            ->count();
-
-        // --- LOGIKA GRAFIK PENJUALAN BULANAN (12 BULAN TERAKHIR) ---
-        $salesData = Penjualan::where('status', 'berhasil')
+        $penjualanBulanIni = $totalJualBulanIni - $totalReturnBulanIni;
+        $salesData = Penjualan::whereIn('status', ['berhasil', 'return'])
             ->where('tanggal', '>=', $now->copy()->subMonths(11)->startOfMonth())
             ->select(
                 DB::raw('DATE_FORMAT(tanggal, "%Y-%m") as month_year'),
                 DB::raw('SUM(total) as total')
             )
             ->groupBy('month_year')
-            ->orderBy('month_year', 'ASC')
+            ->get();
+
+        // Ambil Data Return per Bulan untuk Pengurang
+        $returnData = ReturnPenjualan::where('tanggal', '>=', $now->copy()->subMonths(11)->startOfMonth())
+            ->select(
+                DB::raw('DATE_FORMAT(tanggal, "%Y-%m") as month_year'),
+                DB::raw('SUM(total_refund) as total_refund')
+            )
+            ->groupBy('month_year')
             ->get();
 
         $chartLabels = [];
@@ -58,29 +52,28 @@ class DashboardController extends Controller
         for ($i = 11; $i >= 0; $i--) {
             $month = $now->copy()->subMonths($i);
             $key = $month->format('Y-m');
-            $label = $month->format('M Y');
             
-            $chartLabels[] = $label;
-            $monthlyTotal = $salesData->firstWhere('month_year', $key);
-            $chartValues[] = $monthlyTotal ? (float)$monthlyTotal->total : 0;
+            $chartLabels[] = $month->format('M Y');
+            
+            // Hitung Penjualan Kotor
+            $valJual = $salesData->firstWhere('month_year', $key)->total ?? 0;
+            
+            // Hitung Pengurang (Return)
+            $valReturn = $returnData->firstWhere('month_year', $key)->total_refund ?? 0;
+            
+            // Omset Bersih
+            $chartValues[] = (float)$valJual - (float)$valReturn;
         }
 
-        // --- DATA TABEL & TRANSAKSI ---
-        $produksiTerbaru = Produksi::with(['detail' => function($query) {
-            $query->where('jenis', 'produk')->with('produk');
-        }])->latest()->take(5)->get();
-        
+        // 4. Penjualan Terbaru
         $recentTransactions = Penjualan::with('client')->latest()->take(5)->get();
         
         $title = 'Dashboard';
 
         return view('admin.dashboard', compact(
-            'totalProduk', 
-            'penjualanHariIni',
+            'totalStok', 
+            'produksiHariIni',
             'penjualanBulanIni', 
-            'totalPemasukan', 
-            'jumlahProduksiBulanIni',
-            'produksiTerbaru',
             'recentTransactions',
             'chartLabels',
             'chartValues',

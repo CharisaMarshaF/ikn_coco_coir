@@ -6,8 +6,12 @@
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
     <button data-tw-toggle="modal" data-tw-target="#modal-tambah-bahan" class="btn btn-primary shadow-md mr-2">Tambah Bahan Baku</button>
     
-    <a href="{{ route('stock-log.index', ['type' => 'bahan_baku']) }}" class="btn btn-outline-secondary shadow-md">
+    <a href="{{ route('stock-log.index', ['type' => 'bahan_baku']) }}" class="btn btn-outline-secondary shadow-md mr-2">
         <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Log Bahan Baku
+    </a>
+    <a href="javascript:;" data-tw-toggle="modal" data-tw-target="#modal-laporan-bahan"
+        class="btn btn-danger shadow-md mr-2">
+        <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Laporan PDF
     </a>
 </div>
 
@@ -170,6 +174,45 @@
                 <div class="modal-footer text-right">
                     <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-20 mr-1">Cancel</button>
                     <button type="submit" class="btn btn-primary w-20">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{-- Modal Laporan Per Bahan --}}
+<!-- Modal Laporan PDF -->
+<div id="modal-laporan-bahan" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('bahan-baku.laporan') }}" method="GET" target="_blank">
+                <div class="modal-header">
+                    <h2 class="font-medium text-base mr-auto">Filter Laporan Mutasi Bahan</h2>
+                </div>
+                <div class="modal-body grid grid-cols-12 gap-4 gap-y-3">
+                    <div class="col-span-12">
+                        <label class="form-label">Pilih Bahan Baku</label>
+                        <select name="bahan_id" class="form-select" required>
+                            @foreach($bahan as $b)
+                                <option value="{{ $b->id }}">{{ $b->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-span-12">
+                        <label class="form-label">Dari Tanggal</label>
+                        <input type="date" name="start_date" class="form-control" 
+                            value="{{ date('Y-m-d') }}" required>
+                    </div>
+                    <div class="col-span-12">
+                        <label class="form-label">Sampai Tanggal (1 Bulan Kedepan)</label>
+                        <input type="date" name="end_date" class="form-control" 
+                            value="{{ date('Y-m-d', strtotime('+1 month')) }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer text-right">
+                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-20 mr-1">Batal</button>
+                    <button type="submit" class="btn btn-primary w-32">
+                        <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak PDF
+                    </button>
                 </div>
             </form>
         </div>

@@ -38,12 +38,13 @@
                         <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>
                     </div>
 
+                     <div>
+                        <label class="form-label font-medium">Keterangan</label>
+                        <input type="text" name="keterangan" class="form-control" placeholder="Opsional..." required>
+                    </div>
+
                     
 
-                    <div>
-                        <label class="form-label font-medium">Keterangan</label>
-                        <textarea name="keterangan" class="form-control" rows="6" placeholder="Opsional..."></textarea>
-                    </div>
 
                     <div class="pt-4">
                         <button type="submit" class="btn btn-primary w-full shadow-md py-3">

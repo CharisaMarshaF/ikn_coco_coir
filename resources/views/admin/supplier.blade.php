@@ -73,9 +73,9 @@
                             <label class="form-label">Alamat</label>
                             <textarea name="alamat" class="form-control" rows="3">{{ $s->alamat }}</textarea>
                         </div>
-                        <div class="col-span-12">
+                         <div class="col-span-12">
                             <label class="form-label">Keterangan</label>
-                            <textarea name="keterangan" class="form-control" rows="2">{{ $s->keterangan }}</textarea>
+                            <input type="text" name="keterangan" class="form-control" value="{{ $s->keterangan }}" required>
                         </div>
                     </div>
                     <div class="modal-footer text-right">
@@ -133,9 +133,10 @@
                         <label class="form-label">Alamat</label>
                         <textarea name="alamat" class="form-control" placeholder="Alamat lengkap..." rows="3"></textarea>
                     </div>
+                    
                     <div class="col-span-12">
                         <label class="form-label">Keterangan</label>
-                        <textarea name="keterangan" class="form-control" placeholder="Catatan tambahan..." rows="2"></textarea>
+                        <input type="text" name="keterangan" class="form-control" placeholder="Catatan tambahan..." required>
                     </div>
                 </div>
                 <div class="modal-footer text-right">

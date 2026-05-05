@@ -20,4 +20,11 @@ class PenjualanDetail extends Model
     {
         return $this->belongsTo(Produk::class);
     }
+
+    public function getTotalReturn()
+    {
+        return \App\Models\ReturnDetail::whereHas('returnHeader', function($q) {
+            $q->where('penjualan_id', $this->penjualan_id);
+        })->where('produk_id', $this->produk_id)->sum('qty');
+    }
 }

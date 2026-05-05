@@ -77,7 +77,7 @@ public function cetakPenjualan(Request $request)
         ->where('status', 'berhasil')
         ->whereBetween('tanggal', [$start_date, $end_date]);
 
-    $data = $query->orderBy('tanggal', 'desc')->get();
+    $data = $query->orderBy('tanggal', 'asc')->get();
     
     $summary = [
         'total_omzet' => $data->sum('total'),
@@ -102,7 +102,7 @@ public function cetakPembelian(Request $request)
         ->where('status_pembayaran', 'lunas')
         ->whereBetween('tanggal', [$start_date, $end_date]);
 
-    $data = $query->orderBy('tanggal', 'desc')->get();
+    $data = $query->orderBy('tanggal', 'asc')->get();
 
     $summary = [
         'total_pengeluaran' => $data->sum('total'),

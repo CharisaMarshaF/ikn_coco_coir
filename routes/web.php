@@ -39,7 +39,9 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
 
     Route::resource('users', UserController::class);
     Route::resource('supplier', SupplierController::class);
+    Route::get('/bahan-baku/laporan', [BahanBakuController::class, 'cetakLaporan'])->name('bahan-baku.laporan');
     Route::resource('bahan-baku', BahanBakuController::class);
+    Route::get('/produk/laporan', [App\Http\Controllers\ProdukController::class, 'cetakLaporan'])->name('produk.laporan');
     Route::resource('produk', ProdukController::class);
     Route::resource('client', ClientController::class);
     Route::resource('rekening', RekeningController::class);
@@ -50,12 +52,25 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
     Route::post('/produksi/{id}/update-status', [ProduksiController::class, 'updateStatus'])->name('produksi.update-status');
     Route::get('/produksi/{id}/repair', [ProduksiController::class, 'repair'])->name('produksi.repair');
     Route::post('/produksi/{id}/repair-store', [ProduksiController::class, 'repairStore'])->name('produksi.repair-store');
+    Route::get('/penjualan/return/cetak', [PenjualanController::class, 'cetakReturn'])->name('penjualan.cetak_return');
+
+    Route::get('/penjualan/return-list', [PenjualanController::class, 'returnList'])->name('penjualan.return_list');
+    Route::get('/penjualan/return/{id}', [PenjualanController::class, 'showReturn'])->name('penjualan.show_return');
+    // Route untuk cetak laporan PDF return (yang menyebabkan error)
+    Route::get('/penjualan/print-resend/{id}', [App\Http\Controllers\PenjualanController::class, 'printResendPDF'])
+    ->name('penjualan.print_resend');
+    Route::post('/penjualan/resend-return/{return_id}', [PenjualanController::class, 'resendReturn'])->name('penjualan.resend_return');
+    Route::post('/penjualan/return/{return_id}/kirim-ulang', [PenjualanController::class, 'kirimUlang'])->name('penjualan.kirim_ulang');
+    Route::get('/penjualan/{id}/resend', [PenjualanController::class, 'resend'])->name('penjualan.resend');
+    Route::post('/penjualan/{id}/resend', [PenjualanController::class, 'storeResend'])->name('penjualan.store_resend');
     Route::resource('penjualan', PenjualanController::class);   
     Route::get('penjualan/{id}', [PenjualanController::class, 'show'])->name('penjualan.show');
     Route::post('penjualan/{id}/cancel', [PenjualanController::class, 'cancel'])->name('penjualan.cancel');
     Route::post('penjualan/{id}/return', [PenjualanController::class, 'return'])->name('penjualan.return');
     Route::get('penjualan/{id}/print', [PenjualanController::class, 'print'])->name('penjualan.print');
     Route::get('penjualan/{id}/pdf', [PenjualanController::class, 'downloadPDF'])->name('penjualan.pdf');
+    Route::get('penjualan/return', [PenjualanController::class, 'indexReturn'])->name('penjualan.return');
+    
     Route::get('keuangan/kas', [KasHarianController::class, 'index'])->name('kas.index');
     Route::post('keuangan/kas', [KasHarianController::class, 'store'])->name('kas.store');
     Route::delete('keuangan/kas/{id}', [KasHarianController::class, 'destroy'])->name('kas.destroy');

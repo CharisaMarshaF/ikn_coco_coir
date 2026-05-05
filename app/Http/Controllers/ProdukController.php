@@ -7,7 +7,8 @@ use App\Models\StokProduk;
 use App\Models\StockLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 class ProdukController extends Controller
 {
     public function index()
@@ -117,5 +118,74 @@ class ProdukController extends Controller
         });
 
         return redirect()->back()->with('success', 'Produk berhasil dipindahkan ke tempat sampah (Soft Delete)');
+    }
+
+    public function cetakLaporan(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'produk_id' => 'required|exists:produk,id'
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end = Carbon::parse($request->end_date)->endOfDay();
+        $produkId = $request->produk_id;
+
+        $produk = Produk::findOrFail($produkId);
+
+        // 1. Hitung Stok Awal (Saldo sebelum start_date)
+        // Stok Sekarang - (Masuk setelah start_date) + (Keluar setelah start_date)
+        $stokSekarang = $produk->stok->jumlah ?? 0;
+        
+        $mutasiSetelah = StockLog::where('item_id', $produkId)
+            ->where('item_type', 'produk')
+            ->where('created_at', '>=', $start)
+            ->select(
+                DB::raw("SUM(CASE WHEN jenis = 'masuk' THEN jumlah ELSE 0 END) as total_masuk"),
+                DB::raw("SUM(CASE WHEN jenis = 'keluar' THEN jumlah ELSE 0 END) as total_keluar")
+            )->first();
+
+        $stokAwal = $stokSekarang - ($mutasiSetelah->total_masuk ?? 0) + ($mutasiSetelah->total_keluar ?? 0);
+
+        // 2. Ambil mutasi dalam range tanggal
+        $logs = StockLog::where('item_id', $produkId)
+            ->where('item_type', 'produk')
+            ->whereBetween('created_at', [$start, $end])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $mutasi = [];
+        $tempStok = $stokAwal;
+        $totalKeluar = 0;
+
+        foreach ($logs as $log) {
+            $masuk = $log->jenis == 'masuk' ? $log->jumlah : 0;
+            $keluar = $log->jenis == 'keluar' ? $log->jumlah : 0;
+            $tempStok = $tempStok + $masuk - $keluar;
+            
+            if($log->jenis == 'keluar') $totalKeluar += $log->jumlah;
+
+            $mutasi[] = [
+                'tanggal' => $log->created_at,
+                'masuk' => $masuk,
+                'keluar' => $keluar,
+                'stok_akhir' => $tempStok,
+                'keterangan' => $log->sumber . ' - ' . $log->keterangan
+            ];
+        }
+
+        $data = [
+            'produk' => $produk,
+            'start_date' => $start,
+            'end_date' => $end,
+            'stokAwal' => $stokAwal,
+            'mutasi' => $mutasi,
+            'stokAkhir' => $tempStok,
+            'totalKeluar' => $totalKeluar
+        ];
+
+        $pdf = Pdf::loadView('admin.laporan.produk_pdf', $data);
+        return $pdf->stream('Laporan_Produk' . $produk->nama . '.pdf');
     }
 }

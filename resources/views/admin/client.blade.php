@@ -76,7 +76,7 @@
                         </div>
                         <div class="col-span-12">
                             <label class="form-label">Catatan</label>
-                            <textarea name="catatan" class="form-control">{{ $c->catatan }}</textarea>
+                            <input type="text" name="catatan" class="form-control" value="{{ $c->catatan }}" required>
                         </div>
                     </div>
                     <div class="modal-footer text-right">
@@ -136,7 +136,7 @@
                     </div>
                     <div class="col-span-12">
                         <label class="form-label">Catatan</label>
-                        <textarea name="catatan" class="form-control" placeholder="Catatan tambahan jika ada"></textarea>
+                        <input type="text" name="catatan" class="form-control" placeholder="Catatan tambahan jika ada" required>
                     </div>
                 </div>
                 <div class="modal-footer text-right">

@@ -30,6 +30,9 @@
                     class="btn btn-danger shadow-md mr-2">
                     <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Laporan PDF
                 </a>
+                <a href="{{ route('penjualan.return_list') }}" class="btn btn-pending shadow-md mr-2">
+                    <i data-lucide="refresh-ccw" class="w-4 h-4 mr-2"></i> Daftar Barang Return
+                </a>
             </div>
         </div>
 

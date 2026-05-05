@@ -28,4 +28,9 @@ class Penjualan extends Model
     {
         return $this->hasOne(Invoice::class);
     }
+
+    public function returns()
+    {
+        return $this->hasMany(ReturnPenjualan::class, 'penjualan_id');
+    }
 }
