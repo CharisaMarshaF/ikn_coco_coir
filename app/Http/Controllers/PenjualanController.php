@@ -201,7 +201,7 @@ class PenjualanController extends Controller
             // --- LOGIKA PEMBERSIHAN DATA RETURN ---
             if ($penjualan->returns->count() > 0) {
                 foreach ($penjualan->returns as $returnHeader) {
-                    
+
                     // A. Jika saat return barang dimasukkan ke stok, maka saat cancel stok harus dikurangi lagi
                     // agar tidak terjadi double stok (karena stok penjualan asli sudah dikembalikan di atas)
                     foreach ($returnHeader->detail as $retDetail) {
@@ -246,7 +246,7 @@ class PenjualanController extends Controller
     public function showReturn($id)
     {
         $return = ReturnPenjualan::with(['penjualan.client', 'detail.produk'])->findOrFail($id);
-        
+
         $title = 'Detail Return Barang';
         return view('admin.penjualan.show_return', compact('return', 'title'));
     }
@@ -269,7 +269,7 @@ class PenjualanController extends Controller
                 'tanggal'   => $request->tanggal,
                 'total'     => 0, // Harga default 0
                 'status'    => 'berhasil',
-                'keterangan'=> "Kirim Ulang (Replacement) dari Return #{$return->nomor_return}"
+                'keterangan' => "Kirim Ulang (Replacement) dari Return #{$return->nomor_return}"
             ]);
 
             foreach ($return->detail as $item) {
@@ -325,13 +325,13 @@ class PenjualanController extends Controller
             ->findOrFail($id);
 
         $company = CompanyProfile::first();
-        
+
         // Kita gunakan flag 'type' => 'resend' agar di view bisa kita manipulasi
-        $type = 'invoice'; 
+        $type = 'invoice';
         $is_resend_doc = true; // Penanda untuk view
 
         $customPaper = [0, 0, 595, 420]; // A5 Landscape
-        
+
         $pdf = Pdf::loadView('admin.penjualan.pdf_resend', compact('penjualan', 'type', 'company', 'is_resend_doc'))
             ->setPaper($customPaper, 'landscape');
 
@@ -440,14 +440,14 @@ class PenjualanController extends Controller
         $filename = ($type == 'sj' ? 'SJ-' : 'INV-') . $penjualan->id . '.pdf';
         return $pdf->stream($filename);
     }
-   // Menampilkan Daftar Return
+    // Menampilkan Daftar Return
     public function returnList(Request $request)
     {
         $query = \App\Models\ReturnPenjualan::with(['penjualan.client', 'detail.produk']);
 
         if ($request->search) {
             $search = $request->search;
-            $query->whereHas('penjualan.client', function($q) use ($search) {
+            $query->whereHas('penjualan.client', function ($q) use ($search) {
                 $q->where('nama', 'like', "%$search%");
             })->orWhere('nomor_return', 'like', "%$search%");
         }
@@ -467,7 +467,7 @@ class PenjualanController extends Controller
 
             // Load detail return BESERTA produknya
             $returnHeader = \App\Models\ReturnPenjualan::with(['detail.produk', 'penjualan'])->findOrFail($return_id);
-            
+
             if ($returnHeader->is_resend) {
                 return back()->with('error', 'Gagal: Barang sudah pernah dikirim ulang.');
             }
@@ -521,7 +521,6 @@ class PenjualanController extends Controller
             return back()->with('error', 'Gagal kirim ulang: ' . $e->getMessage());
         }
     }
-
     public function cetakReturn(Request $request)
     {
         $request->validate([
@@ -532,25 +531,29 @@ class PenjualanController extends Controller
         $start = $request->start_date;
         $end = $request->end_date;
 
-        // Gunakan Eager Loading agar tidak berat saat looping di view
         $data = \App\Models\ReturnDetail::with([
-                'returnHeader.penjualan.client', 
-                'produk'
-            ])
-            ->whereHas('returnHeader', function($q) use ($start, $end) {
+            'returnHeader.penjualan.client',
+            'produk'
+        ])
+            ->whereHas('returnHeader', function ($q) use ($start, $end) {
                 $q->whereBetween('tanggal', [$start, $end]);
             })
-            ->orderBy('created_at', 'desc')
+            ->orderBy(
+                \App\Models\ReturnPenjualan::select('tanggal')
+                    ->whereColumn('returns.id', 'return_details.return_id'),
+                'asc' // 🔥 dari tanggal kecil ke besar
+            )
             ->get();
 
         $title = "Laporan Return Penjualan";
+        $konfigurasi = \App\Models\CompanyProfile::first();
 
-        $pdf = Pdf::loadView('admin.penjualan.pdf_return', compact('data', 'start', 'end', 'title'))
-                ->setPaper('a4', 'portrait'); // Bisa ganti landscape jika kolom makin banyak
-        
-        return $pdf->stream('Laporan-Return-'.$start.'-to-'.$end.'.pdf');
+        $pdf = Pdf::loadView(
+            'admin.penjualan.pdf_return',
+            compact('data', 'start', 'end', 'title', 'konfigurasi')
+        )
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Laporan-Return-' . $start . '-to-' . $end . '.pdf');
     }
-
-    
-
 }

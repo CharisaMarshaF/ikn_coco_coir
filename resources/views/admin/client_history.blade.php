@@ -4,9 +4,12 @@
 <div class="grid grid-cols-12 gap-6 mt-5">
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
         <a href="{{ route('client.index') }}" class="btn btn-secondary shadow-md mr-2">
-            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Kembali ke Data Client
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Kembali
         </a>
-
+                    <a href="javascript:;" data-tw-toggle="modal" data-tw-target="#modal-laporan-client"
+                class="btn btn-danger shadow-md mr-2">
+                <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Laporan PDF
+            </a>
     </div>
 
    
@@ -63,6 +66,39 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+        {{-- Modal Laporan PDF --}}
+{{-- Modal Laporan PDF --}}
+<div id="modal-laporan-client" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            {{-- Action diarahkan ke route cetak history dengan ID client --}}
+            <form action="{{ route('client.history.cetak', $client->id) }}" method="GET" target="_blank">
+                <div class="modal-header">
+                    <h2 class="font-medium text-base mr-auto">Filter Laporan Histori Client</h2>
+                </div>
+                <div class="modal-body grid grid-cols-12 gap-4 gap-y-3">
+                    <div class="col-span-12">
+                        <label class="form-label">Dari Tanggal</label>
+                        <input type="date" name="start_date" class="form-control" 
+                            value="{{ \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') }}" required>
+                    </div>
+                    <div class="col-span-12">
+                        <label class="form-label">Sampai Tanggal</label>
+                        <input type="date" name="end_date" class="form-control" 
+                            value="{{ \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer text-right">
+                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-20 mr-1">Batal</button>
+                    <button type="submit" class="btn btn-primary w-32">
+                        <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak PDF
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -1,38 +1,105 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Laporan Pembelian IKN COCO COIR</title>
+    <title>Laporan Pembelian {{ $konfigurasi->nama_cv }}</title>
     <style>
-        @page { margin: 1cm; }
-        body { font-family: sans-serif; font-size: 9px; color: #333; line-height: 1.3; }
+        @page { 
+            margin: 1cm; 
+        }
         
-        .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 5px; }
-        .header h2 { margin: 0; text-transform: uppercase; font-size: 16px; }
-        .header h3 { margin: 2px 0; font-size: 13px; }
-        .header p { margin: 2px 0; }
+        body { 
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            font-size: 9px; 
+            color: #333; 
+            line-height: 1.4; 
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header Section */
+        .header { 
+            text-align: center; 
+            margin-bottom: 20px; 
+            padding-bottom: 8px;
+            border-bottom: 2px solid #2c3e50;
+        }
+        .header h2 { 
+            margin: 0; 
+            text-transform: uppercase; 
+            font-size: 16px; 
+            color: #2c3e50;
+        }
+        .header h3 { 
+            margin: 4px 0; 
+            font-size: 12px; 
+            color: #555;
+            letter-spacing: 1px;
+        }
+        .header p { 
+            margin: 2px 0; 
+            font-size: 10px;
+            color: #666;
+        }
+
+        /* Table Styling */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            table-layout: fixed;
+            background-color: #fff;
+        }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 5px; table-layout: fixed; }
-        th, td { border: 1px solid #777; padding: 4px 5px; vertical-align: middle; word-wrap: break-word; }
-        th { background-color: #f2f2f2; font-weight: bold; text-transform: uppercase; font-size: 8.5px; text-align: center; }
-        
+        th { 
+            background-color: #D9E9FF;
+            color: #2c3e50;
+            font-weight: bold; 
+            text-transform: uppercase; 
+            font-size: 8.5px; 
+            padding: 8px 4px;
+            border: 1px solid #7f8c8d;
+            vertical-align: middle;
+        }
+
+        td { 
+            border: 1px solid #7f8c8d; 
+            padding: 6px 6px; 
+            vertical-align: top; /* Align atas sesuai permintaan */
+            word-wrap: break-word; 
+        }
+
+        /* Helpers */
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .font-bold { font-weight: bold; }
-        
-        .summary-container { margin-top: 15px; width: 100%; }
-        .summary-box { float: right; width: 250px; }
-        .summary-box table { border: none; }
-        .summary-box table td { border: none; padding: 3px 0; font-size: 11px; }
-        .total-row { border-top: 1.5px solid #000 !important; font-weight: bold; }
 
-        .item-row { border-bottom: 1px solid #eee; padding: 2px 0; }
-        .item-row:last-child { border-bottom: none; }
+        /* Row Highlights */
+        .bg-light { background-color: #f9fbfd; }
+        
+        .row-total-footer {
+            background-color: #D9E9FF;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .unit-text {
+            font-size: 8px;
+            color: #7f8c8d;
+            margin-left: 2px;
+        }
+
+        /* Footer Stamp */
+        .footer-stamp {
+            margin-top: 15px;
+            font-size: 8px;
+            color: #999;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h2>{{ $konfigurasi->nama_perusahaan ?? 'IKN COCO COIR' }}</h2>
+        <h2>{{ $konfigurasi->nama_cv ?? 'IKN COCO COIR' }}</h2>
         <h3>LAPORAN PEMBELIAN BAHAN BAKU</h3>
         <p>Periode: 
             <strong>{{ \Carbon\Carbon::parse($start_date)->translatedFormat('j F Y') }}</strong> 
@@ -44,27 +111,30 @@
     <table>
         <thead>
             <tr>
-                <th width="5%">No</th>
-                <th width="15%">Tanggal</th>
-                <th width="15%">No. Nota</th>
-                <th width="20%">Supplier</th>
-                <th width="25%">Bahan Baku</th>
-                <th width="15%">Qty</th>
-                <th width="15%">Harga Satuan</th>
-                <th width="20%">Total Nilai</th>
+                <th width="4%">No</th>
+                <th width="14%">Tanggal</th>
+                <th width="14%">No. Nota</th>
+                <th width="18%">Supplier</th>
+                <th width="20%">Bahan Baku</th>
+                <th width="10%">Qty</th>
+                <th width="10%">Harga </th>
+                <th width="10%">Total Nota</th>
             </tr>
         </thead>
         <tbody>
             @forelse($data as $key => $row)
-                @php $rowCount = $row->detail->count(); @endphp
+                @php 
+                    $rowCount = $row->detail->count(); 
+                    $rowClass = ($key % 2 == 0) ? '' : 'bg-light';
+                @endphp
                 @foreach($row->detail as $index => $item)
-                <tr>
+                <tr class="{{ $rowClass }}">
                     @if($index === 0)
-                        <td rowspan="{{ $rowCount }}" class="text-center">{{ $key + 1 }}</td>
+                        <td rowspan="{{ $rowCount }}" class="text-center font-bold">{{ $key + 1 }}</td>
                         <td rowspan="{{ $rowCount }}" class="text-center">
                             {{ \Carbon\Carbon::parse($row->tanggal)->translatedFormat('j F Y') }}
                         </td>
-                        <td rowspan="{{ $rowCount }}" class="text-center">
+                        <td rowspan="{{ $rowCount }}" class="text-center font-bold" style="color: #2c3e50;">
                              #PB-{{ str_pad($row->id, 5, '0', STR_PAD_LEFT) }}
                         </td>
                         <td rowspan="{{ $rowCount }}">
@@ -73,9 +143,9 @@
                     @endif
 
                     <td>{{ $item->bahan->nama ?? 'Bahan Tidak Ditemukan' }}</td>
-                    <td class="text-center">
-                        {{-- Qty diatur 2 angka desimal --}}
-                        {{ number_format($item->qty, 2, ',', '.') }} {{ $item->bahan->satuan ?? '' }}
+                    <td class="text-right">
+                        {{ number_format($item->qty, 2, ',', '.') }}
+                        <span class="unit-text">{{ $item->bahan->satuan ?? '' }}</span>
                     </td>
                     <td class="text-right">
                         {{ number_format($item->harga, 0, ',', '.') }}
@@ -90,26 +160,22 @@
                 @endforeach
             @empty
             <tr>
-                <td colspan="8" class="text-center">Tidak ada data pembelian pada periode ini.</td>
+                <td colspan="8" class="text-center" style="padding: 20px;">Tidak ada data pembelian pada periode ini.</td>
             </tr>
             @endforelse
         </tbody>
+        <tfoot>
+            <tr class="row-total-footer">
+                <td colspan="7" class="text-right" style="padding: 8px;">TOTAL PENGELUARAN</td>
+                <td class="text-right" style="padding: 8px;">
+                    {{ number_format($summary['total_pengeluaran'], 0, ',', '.') }}
+                </td>
+            </tr>
+        </tfoot>
     </table>
 
-    <div class="summary-container">
-        <div class="summary-box">
-            <table>
-                <tr class="total-row">
-                    <td width="130px">TOTAL PENGELUARAN</td>
-                    <td class="text-right">Rp {{ number_format($summary['total_pengeluaran'], 0, ',', '.') }}</td>
-                </tr>
-            </table>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
-
-    <div style="margin-top: 30px; text-align: left; font-size: 8px; color: #666; position: fixed; bottom: 0;">
-        Dicetak pada: {{ now()->translatedFormat('j F Y H:i') }}
+    <div class="footer-stamp">
+        Dicetak otomatis oleh Sistem pada: {{ now()->translatedFormat('j F Y') }} WIB
     </div>
 </body>
 </html>

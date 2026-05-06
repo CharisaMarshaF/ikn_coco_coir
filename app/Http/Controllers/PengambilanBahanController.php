@@ -217,8 +217,9 @@ class PengambilanBahanController extends Controller
                 'total_qty' => $items->sum('qty')
             ];
         });
+        $konfigurasi = \App\Models\CompanyProfile::first();
 
         $title = 'Laporan Pengambilan Bahan';
-        return view('admin.pengambilan.laporan', compact('data', 'summary', 'dari', 'sampai', 'title'));
+        return view('admin.pengambilan.laporan', compact('data', 'summary', 'dari', 'sampai', 'title', 'konfigurasi'));
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\CompanyProfile;
 use App\Models\Penjualan;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class ClientController extends Controller
@@ -60,5 +62,37 @@ class ClientController extends Controller
         $title = 'Histori Transaksi - ' . $client->nama;
         
         return view('admin.client_history', compact('client', 'penjualan', 'title'));
+    }
+
+    public function cetakHistory(Request $request, $id)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+        ]);
+
+        $client = Client::findOrFail($id);
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+
+        $data = Penjualan::where('client_id', $id)
+            ->whereBetween('tanggal', [$start_date, $end_date])
+            ->with(['detail.produk']) // Eager loading
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        $total_omzet = $data->sum('total');
+        $konfigurasi = CompanyProfile::first();
+
+        $pdf = Pdf::loadView('admin.laporan.client_history_pdf', [
+            'client' => $client,
+            'data' => $data,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+            'total_omzet' => $total_omzet,
+            'konfigurasi' => $konfigurasi,
+        ]);
+
+        return $pdf->stream('Histori_Transaksi_' . $client->nama . '.pdf');
     }
 }

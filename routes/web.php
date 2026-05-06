@@ -38,12 +38,14 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
     })->name('staff.dashboard');
 
     Route::resource('users', UserController::class);
+    Route::get('/supplier/{id}/transaksi/cetak', [SupplierController::class, 'cetakTransaksi'])->name('supplier.transaksi.cetak');
     Route::resource('supplier', SupplierController::class);
     Route::get('/supplier/{id}/transaksi', [SupplierController::class, 'transaksi'])->name('supplier.transaksi');
     Route::get('/bahan-baku/laporan', [BahanBakuController::class, 'cetakLaporan'])->name('bahan-baku.laporan');
     Route::resource('bahan-baku', BahanBakuController::class);
     Route::get('/produk/laporan', [App\Http\Controllers\ProdukController::class, 'cetakLaporan'])->name('produk.laporan');
     Route::resource('produk', ProdukController::class);
+    Route::get('/client/history/{id}/cetak', [ClientController::class, 'cetakHistory'])->name('client.history.cetak');
     Route::resource('client', ClientController::class);
     Route::get('/client/{id}/history', [ClientController::class, 'history'])->name('client.history');
     Route::resource('rekening', RekeningController::class);
@@ -89,6 +91,7 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
     Route::get('/laporan/pembelian', [LaporanController::class, 'pembelian'])->name('laporan.pembelian');
     Route::get('/laporan/penjualan/cetak', [LaporanController::class, 'cetakPenjualan'])->name('laporan.penjualan.cetak');
     Route::get('/laporan/pembelian/cetak', [LaporanController::class, 'cetakPembelian'])->name('laporan.pembelian.cetak');
+    Route::get('/stock-log/cetak', [StockLogController::class, 'cetakLaporan'])->name('stock-log.cetak');
     Route::get('/stok-log', [StockLogController::class, 'index'])->name('stock-log.index');
     Route::get('/log-stok-produk', [StockLogController::class, 'indexProduk'])->name('log.produk');
     Route::get('/kas', [KasHarianController::class, 'index'])->name('kas.index');
@@ -99,24 +102,19 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
         Route::post('/store', [PengambilanBahanController::class, 'store'])->name('store');     // Proses Simpan
         Route::delete('/{id}', [PengambilanBahanController::class, 'destroy'])->name('destroy'); // Proses Hapus (Revert Stok)
     });
-    // Hasil Produksi
-// Pastikan name() sesuai dengan yang dipanggil di view
-// Tambahkan ini di web.php
-Route::get('hasil-produksi/cetak', [HasilProduksiController::class, 'cetakLaporan'])->name('hasil-produksi.cetak');
+    Route::get('hasil-produksi/cetak', [HasilProduksiController::class, 'cetakLaporan'])->name('hasil-produksi.cetak');
 
-// Baru kemudian resource (jika ada)
-Route::resource('hasil-produksi', HasilProduksiController::class);
-    Route::prefix('hasil-produksi')->name('hasil-produksi.')->group(function () {
-        Route::get('/', [HasilProduksiController::class, 'index'])->name('index');
-        Route::get('/create', [HasilProduksiController::class, 'create'])->name('create');
-        Route::post('/store', [HasilProduksiController::class, 'store'])->name('store');
-        Route::delete('/{id}', [HasilProduksiController::class, 'destroy'])->name('destroy');
-        Route::get('/{id}', [HasilProduksiController::class, 'show'])->name('show');
-    });
-Route::get('/pengambilan/pdf', [PengambilanBahanController::class, 'cetakPdf'])->name('pengambilan.pdf');
-Route::get('pembelian/pdf', [PembelianController::class, 'cetakPDF'])->name('pembelian.pdf');
-// Pengambilan Bahan
-Route::get('pengambilan/cetak', [PengambilanBahanController::class, 'cetakPdf'])->name('pengambilan.cetak');
+    Route::resource('hasil-produksi', HasilProduksiController::class);
+        Route::prefix('hasil-produksi')->name('hasil-produksi.')->group(function () {
+            Route::get('/', [HasilProduksiController::class, 'index'])->name('index');
+            Route::get('/create', [HasilProduksiController::class, 'create'])->name('create');
+            Route::post('/store', [HasilProduksiController::class, 'store'])->name('store');
+            Route::delete('/{id}', [HasilProduksiController::class, 'destroy'])->name('destroy');
+            Route::get('/{id}', [HasilProduksiController::class, 'show'])->name('show');
+        });
+    Route::get('/pengambilan/pdf', [PengambilanBahanController::class, 'cetakPdf'])->name('pengambilan.pdf');
+    Route::get('pembelian/pdf', [PembelianController::class, 'cetakPDF'])->name('pembelian.pdf');
+    Route::get('pengambilan/cetak', [PengambilanBahanController::class, 'cetakPdf'])->name('pengambilan.cetak');
 
 
 });

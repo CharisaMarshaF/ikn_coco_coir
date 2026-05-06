@@ -30,6 +30,7 @@ class LaporanController extends Controller
             'total_return' => $data->where('status', 'return')->sum('total'),
             'count_transaksi' => $data->count(),
         ];
+
         $title = 'Laporan Penjualan';
         return view('admin.laporan.penjualan', compact('data', 'summary', 'start_date', 'end_date', 'status', 'title'));
     }
@@ -59,6 +60,8 @@ class LaporanController extends Controller
             'total_hutang' => $data->where('status_pembayaran', 'hutang')->sum('total'),
             'count_transaksi' => $data->count(),
         ];
+
+        
         $title = 'Laporan Pembelian';
         return view('admin.laporan.pembelian', compact('data', 'summary', 'start_date', 'end_date', 'status', 'title'   ));
     }
@@ -82,9 +85,10 @@ public function cetakPenjualan(Request $request)
     $summary = [
         'total_omzet' => $data->sum('total'),
     ];
+    $konfigurasi = \App\Models\CompanyProfile::first();
 
-    $pdf = Pdf::loadView('admin.laporan.pdf_penjualan', compact('data', 'summary', 'start_date', 'end_date'))
-              ->setPaper('a4', 'landscape');
+    $pdf = Pdf::loadView('admin.laporan.pdf_penjualan', compact('data', 'summary', 'start_date', 'end_date', 'konfigurasi'))
+              ->setPaper('a4', 'potrait');
     
     return $pdf->stream('Laporan-Penjualan-Berhasil.pdf');
 }
@@ -108,8 +112,9 @@ public function cetakPembelian(Request $request)
         'total_pengeluaran' => $data->sum('total'),
         'count_transaksi' => $data->count(),
     ];
+    $konfigurasi = \App\Models\CompanyProfile::first();
 
-    $pdf = Pdf::loadView('admin.laporan.pdf_pembelian', compact('data', 'summary', 'start_date', 'end_date'))
+    $pdf = Pdf::loadView('admin.laporan.pdf_pembelian', compact('data', 'summary', 'start_date', 'end_date', 'konfigurasi'))
               ->setPaper('a4', 'portrait');
 
     return $pdf->stream('Laporan-Pembelian-Lunas.pdf');

@@ -4,14 +4,18 @@
 <div class="grid grid-cols-12 gap-6 mt-5">
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
         <a href="{{ route('supplier.index') }}" class="btn btn-secondary shadow-md mr-2">
-            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Kembali ke List Supplier
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Kembali
         </a>
         {{-- <div class="hidden md:block mx-auto text-slate-500">
             Histori Transaksi: <span class="font-bold text-slate-700">{{ $supplier->nama }}</span>
         </div> --}}
+        <a href="javascript:;" data-tw-toggle="modal" data-tw-target="#modal-laporan-transaksi"
+                class="btn btn-danger shadow-md mr-2">
+                <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Laporan PDF
+            </a>
     </div>
 
-    <div class="intro-y col-span-12 p-5 bg-white rounded-lg shadow mt-5">
+    <div class="intro-y col-span-12 p-5 bg-white rounded-lg shadow mt-2">
         <div class="preview">
             <div class="overflow-x-auto">
                 <table id="example1" class="table table-report table-report--bordered display datatable w-full">
@@ -34,27 +38,27 @@
                                         #PB-{{ str_pad($p->id, 5, '0', STR_PAD_LEFT) }}
                                     </a>
                                 </td>
-                                <td class="text-center">
+                                <td class="text-">
                                     @if ($p->status_pembayaran == 'lunas')
-                                        <div class="flex items-center justify-center text-success font-medium">
+                                        <div class="flex items-center justify- text-success font-medium">
                                             <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Lunas
                                         </div>
                                     @elseif($p->status_pembayaran == 'cancel')
-                                        <div class="flex items-center justify-center text-danger font-medium uppercase italic">
+                                        <div class="flex items-center justify- text-danger font-medium uppercase italic">
                                             <i data-lucide="x-circle" class="w-4 h-4 mr-2"></i> Cancelled
                                         </div>
                                     @else
-                                        <div class="flex items-center justify-center text-pending font-medium">
+                                        <div class="flex items-center justify- text-pending font-medium">
                                             <i data-lucide="clock" class="w-4 h-4 mr-2"></i> Belum Lunas
                                         </div>
                                     @endif
                                 </td>
-                                <td class="text-center">
+                                <td class="text-">
                                     <div class="whitespace-nowrap">
                                         {{ \Carbon\Carbon::parse($p->tanggal)->format('d F Y') }}
                                     </div>
                                 </td>
-                                <td class="w-40 text-right">
+                                <td class="w-40 text-">
                                     <div class="font-bold text-primary">
                                         Rp {{ number_format($p->total, 0, ',', '.') }}
                                     </div>
@@ -74,6 +78,44 @@
         </div>
     </div>
 </div>
+
+        {{-- Modal Laporan PDF --}}
+        <div id="modal-laporan-transaksi" class="modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    {{-- Form diarahkan ke method cetakPengambilan di Controller --}}
+                    {{-- Ganti baris ini --}}
+                    {{-- Ganti bagian form di dalam modal-laporan-pengambilan --}}
+                    <form action="{{ route('supplier.transaksi.cetak', $supplier->id) }}" method="GET" target="_blank">
+                        <div class="modal-header">
+                            <h2 class="font-medium text-base mr-auto">Filter Laporan Transaksi Supplier</h2>
+                        </div>
+                        <div class="modal-body grid grid-cols-12 gap-4 gap-y-3">
+                            <div class="col-span-12">
+                                <label class="form-label">Nama Supplier</label>
+                                <input type="text" class="form-control" value="{{ $supplier->nama }}" readonly>
+                            </div>
+                            <div class="col-span-12">
+                                <label class="form-label">Dari Tanggal</label>
+                                <input type="date" name="start_date" class="form-control" 
+                                    value="{{ \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') }}" required>
+                            </div>
+                            <div class="col-span-12">
+                                <label class="form-label">Sampai Tanggal</label>
+                                <input type="date" name="end_date" class="form-control" 
+                                    value="{{ \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') }}" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer text-right">
+                            <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-20 mr-1">Batal</button>
+                            <button type="submit" class="btn btn-primary w-32">
+                                <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak PDF
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 @endsection
 
 @section('script')

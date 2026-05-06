@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pembelian;
 use App\Models\Supplier;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
@@ -70,5 +72,36 @@ class SupplierController extends Controller
         $title = 'Histori Transaksi: ' . $supplier->nama;
         
         return view('admin.supplier_transaksi', compact('supplier', 'pembelian', 'title'));
+    }
+
+    public function cetakTransaksi(Request $request, $id)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+        ]);
+
+        $supplier = Supplier::withTrashed()->findOrFail($id);
+        $start = $request->start_date;
+        $end = $request->end_date;
+
+        $pembelian = Pembelian::where('supplier_id', $id)
+            ->whereBetween('tanggal', [$start, $end])
+            ->with(['detail.bahan'])
+            ->oldest('tanggal')
+            ->get();
+
+        $total_transaksi = $pembelian->sum('total');
+        $konfigurasi = \App\Models\CompanyProfile::first();
+        $pdf = Pdf::loadView('admin.laporan.supplier_pembelian_pdf', [
+            'supplier' => $supplier,
+            'pembelian' => $pembelian,
+            'start' => $start,
+            'end' => $end,
+            'total_transaksi' => $total_transaksi,
+            'konfigurasi' => $konfigurasi
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Laporan_Transaksi_' . $supplier->nama . '.pdf');
     }
 }

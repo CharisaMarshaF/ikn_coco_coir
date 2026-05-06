@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Laporan Penjualan {{ $konfigurasi->nama_cv }}</title>
+    <title>Laporan Histori Transaksi - {{ $supplier->nama }}</title>
     <style>
         @page { 
             margin: 1cm; 
@@ -100,11 +100,10 @@
 <body>
     <div class="header">
         <h2>{{ $konfigurasi->nama_cv ?? 'IKN COCO COIR' }}</h2>
-        <h3>LAPORAN PENJUALAN</h3>
-        <p>Periode: 
-            <strong>{{ \Carbon\Carbon::parse($start_date)->translatedFormat('j F Y') }}</strong> 
-            s/d 
-            <strong>{{ \Carbon\Carbon::parse($end_date)->translatedFormat('j F Y') }}</strong>
+        <h3>LAPORAN HISTORI TRANSAKSI SUPPLIER</h3>
+        <p>
+            Supplier: <strong>{{ $supplier->nama }}</strong> | 
+            Periode: <strong>{{ \Carbon\Carbon::parse($start)->translatedFormat('j F Y') }}</strong> s/d <strong>{{ \Carbon\Carbon::parse($end)->translatedFormat('j F Y') }}</strong>
         </p>
     </div>
 
@@ -113,16 +112,16 @@
             <tr>
                 <th width="4%">No</th>
                 <th width="14%">Tanggal</th>
-                <th width="14%">No. Nota</th>
-                <th width="18%">Client</th>
-                <th width="20%">Produk</th>
+                <th width="14%">No. Invoice</th>
+                <th width="18%">Supplier</th>
+                <th width="20%">Bahan Baku</th>
                 <th width="10%">Qty</th>
                 <th width="10%">Harga</th>
                 <th width="10%">Total Nilai</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($data as $key => $row)
+            @forelse($pembelian as $key => $row)
                 @php 
                     $rowCount = $row->detail->count(); 
                     $rowClass = ($key % 2 == 0) ? '' : 'bg-light';
@@ -135,18 +134,17 @@
                             {{ \Carbon\Carbon::parse($row->tanggal)->translatedFormat('j F Y') }}
                         </td>
                         <td rowspan="{{ $rowCount }}" class="text-center font-bold" style="color: #2c3e50;">
-                             #PJ-{{ str_pad($row->id, 5, '0', STR_PAD_LEFT) }}
+                             #PB-{{ str_pad($row->id, 5, '0', STR_PAD_LEFT) }}
                         </td>
                         <td rowspan="{{ $rowCount }}">
-                            {{ $row->client->nama ?? 'Umum' }}
+                            {{ $row->supplier->nama ?? 'N/A' }}
                         </td>
                     @endif
 
-                    <td>{{ $item->produk->nama ?? 'Produk Tidak Ditemukan' }}</td>
+                    <td>{{ $item->bahan->nama ?? 'Bahan Tidak Ditemukan' }}</td>
                     <td class="text-right">
-                        {{ number_format($item->qty, 0, ',', '.') }}
-                        <span class="unit-text">{{ $item->produk->satuan ?? '' }}</span>
-
+                        {{ number_format($item->qty, 2, ',', '.') }}
+                        <span class="unit-text">{{ $item->bahan->satuan ?? '' }}</span>
                     </td>
                     <td class="text-right">
                         {{ number_format($item->harga, 0, ',', '.') }}
@@ -161,15 +159,15 @@
                 @endforeach
             @empty
             <tr>
-                <td colspan="8" class="text-center" style="padding: 20px;">Tidak ada data penjualan pada periode ini.</td>
+                <td colspan="8" class="text-center" style="padding: 20px;">Tidak ada data transaksi pada periode ini.</td>
             </tr>
             @endforelse
         </tbody>
         <tfoot>
             <tr class="row-total-footer">
-                <td colspan="7" class="text-right" style="padding: 8px;">TOTAL OMZET</td>
+                <td colspan="7" class="text-right" style="padding: 8px;">TOTAL AKUMULASI BELANJA</td>
                 <td class="text-right" style="padding: 8px;">
-                    {{ number_format($summary['total_omzet'], 0, ',', '.') }}
+                    {{ number_format($total_transaksi, 0, ',', '.') }}
                 </td>
             </tr>
         </tfoot>

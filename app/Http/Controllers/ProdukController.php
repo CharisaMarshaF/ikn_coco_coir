@@ -174,7 +174,7 @@ class ProdukController extends Controller
                 'keterangan' => $log->sumber . ' - ' . $log->keterangan
             ];
         }
-
+        $konfigurasi = \App\Models\CompanyProfile::first();
         $data = [
             'produk' => $produk,
             'start_date' => $start,
@@ -182,7 +182,8 @@ class ProdukController extends Controller
             'stokAwal' => $stokAwal,
             'mutasi' => $mutasi,
             'stokAkhir' => $tempStok,
-            'totalKeluar' => $totalKeluar
+            'totalKeluar' => $totalKeluar,
+            'konfigurasi' => $konfigurasi
         ];
 
         $pdf = Pdf::loadView('admin.laporan.produk_pdf', $data);

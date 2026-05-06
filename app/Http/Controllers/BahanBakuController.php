@@ -9,15 +9,16 @@ use Barryvdh\DomPDF\Facade\Pdf; // Pastikan sudah install dompdf
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+
 class BahanBakuController extends Controller
 {
     public function index()
     {
         // Ambil semua bahan untuk dropdown filter di modal
         $allBahan = BahanBaku::select('id', 'nama')->get();
-        
+
         $bahan = BahanBaku::select('id', 'nama', 'satuan')
-            ->with(['stok' => function($query) {
+            ->with(['stok' => function ($query) {
                 $query->select('bahan_id', 'jumlah');
             }])
             ->latest()
@@ -26,13 +27,12 @@ class BahanBakuController extends Controller
         $title = 'Data Bahan Baku';
         return view('admin.bahan_baku', compact('bahan', 'allBahan', 'title'));
     }
-    
     public function cetakLaporan(Request $request)
     {
         $request->validate([
             'start_date' => 'required|date',
-            'end_date' => 'required|date',
-            'bahan_id' => 'required|exists:bahan_baku,id'
+            'end_date'   => 'required|date',
+            'bahan_id'   => 'required|exists:bahan_baku,id'
         ]);
 
         $start = Carbon::parse($request->start_date)->startOfDay();
@@ -41,62 +41,60 @@ class BahanBakuController extends Controller
 
         $bahan = BahanBaku::findOrFail($bahanId);
 
-        // 1. Hitung Stok Awal (Saldo sebelum start_date)
-        // Rumus: Stok Sekarang - (Total Mutasi Masuk setelah start_date) + (Total Mutasi Keluar setelah start_date)
-        $stokSekarang = $bahan->stok->jumlah ?? 0;
-        
-        $mutasiSetelah = StockLog::where('item_id', $bahanId)
+        // 1. Ambil Saldo Awal 
+        // Cari log terakhir SEBELUM tanggal mulai untuk mendapatkan stok_sesudah-nya
+        $lastLogBefore = StockLog::where('item_id', $bahanId)
             ->where('item_type', 'bahan_baku')
-            ->where('created_at', '>=', $start)
-            ->select(
-                DB::raw("SUM(CASE WHEN jenis = 'masuk' THEN jumlah ELSE 0 END) as total_masuk"),
-                DB::raw("SUM(CASE WHEN jenis = 'keluar' THEN jumlah ELSE 0 END) as total_keluar")
-            )->first();
+            ->where('created_at', '<', $start)
+            ->orderBy('created_at', 'desc')
+            ->first();
 
-        $stokAwal = $stokSekarang - ($mutasiSetelah->total_masuk ?? 0) + ($mutasiSetelah->total_keluar ?? 0);
+        // Jika tidak ada log sebelumnya, ambil stok_sebelum dari log pertama di periode ini
+        // Jika masih tidak ada, berarti stok awal 0
+        $firstLogInRange = StockLog::where('item_id', $bahanId)
+            ->where('item_type', 'bahan_baku')
+            ->whereBetween('created_at', [$start, $end])
+            ->orderBy('created_at', 'asc')
+            ->first();
 
-        // 2. Ambil data mutasi dalam range tanggal
+        $stokAwal = $lastLogBefore ? $lastLogBefore->stok_sesudah : ($firstLogInRange->stok_sebelum ?? 0);
+
+        // 2. Ambil Mutasi dalam periode
         $logs = StockLog::where('item_id', $bahanId)
             ->where('item_type', 'bahan_baku')
             ->whereBetween('created_at', [$start, $end])
-            ->orderBy('created_at', 'asc')          
+            ->orderBy('created_at', 'asc')
             ->get();
 
-        // 3. Mapping data untuk tabel (No, Tanggal, Pembelian/Masuk, Produksi/Keluar, Stok)
-        $mutasi = [];
-        $tempStok = $stokAwal;
-        $totalDiambil = 0;
-
-        foreach ($logs as $log) {
-            $masuk = $log->jenis == 'masuk' ? $log->jumlah : 0;
-            $keluar = $log->jenis == 'keluar' ? $log->jumlah : 0;
-            $tempStok = $tempStok + $masuk - $keluar;
-            
-            if($log->jenis == 'keluar') $totalDiambil += $log->jumlah;
-
-            $mutasi[] = [
-                'tanggal' => $log->created_at,
-                'masuk' => $masuk,
-                'keluar' => $keluar,
-                'stok_akhir' => $tempStok,
-                'keterangan' => $log->sumber . ' - ' . $log->keterangan
+        // 3. Mapping data untuk view agar struktur tetap sama dengan laporan sebelumnya
+        $mutasi = $logs->map(function ($log) {
+            return [
+                'tanggal'    => $log->created_at,
+                'masuk'      => $log->jenis === 'masuk' ? (double)$log->jumlah : 0,
+                'keluar'     => $log->jenis === 'keluar' ? (double)$log->jumlah : 0,
+                'stok_akhir' => (double)$log->stok_sesudah,
+                'keterangan' => strtoupper($log->sumber) . ($log->keterangan ? ' - ' . $log->keterangan : '')
             ];
-        }
+        });
 
         $data = [
-            'bahan' => $bahan,
-            'start_date' => $start,
-            'end_date' => $end,
-            'stokAwal' => $stokAwal,
-            'mutasi' => $mutasi,
-            'stokAkhir' => $tempStok,
-            'totalDiambil' => $totalDiambil
+            'bahan'        => $bahan,
+            'start_date'   => $start,
+            'end_date'     => $end,
+            'stokAwal'     => (double)$stokAwal,
+            'mutasi'       => $mutasi,
+            'stokAkhir'    => (double)($logs->last()->stok_sesudah ?? $stokAwal),
+            'totalMasuk'   => (double)$mutasi->sum('masuk'),
+            'totalKeluar'  => (double)$mutasi->sum('keluar'),
+            'konfigurasi'  => \App\Models\CompanyProfile::first(),
+            'formatNumber' => function($val) {
+                return number_format((double)$val, 2, ',', '.');
+            }
         ];
 
-        $pdf = Pdf::loadView('admin.laporan.bahan_pdf', $data);
-        return $pdf->stream('Laporan_Mutasi_' . $bahan->nama . '.pdf');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.laporan.bahan_pdf', $data);
+        return $pdf->stream('Laporan_Mutasi_' . str_replace(' ', '_', $bahan->nama) . '.pdf');
     }
-
     // ... Method store, update, destroy tetap sama seperti kode Anda sebelumnya ...
     public function store(Request $request)
     {
@@ -167,7 +165,7 @@ class BahanBakuController extends Controller
     public function destroy($id)
     {
         $bahan = BahanBaku::findOrFail($id);
-        $bahan->delete(); 
+        $bahan->delete();
 
         return redirect()->back()->with('success', 'Bahan baku berhasil dipindahkan ke sampah');
     }
