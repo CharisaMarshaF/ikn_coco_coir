@@ -178,7 +178,7 @@
     </div>
 
     <div class="footer-stamp">
-        Dicetak otomatis oleh Sistem pada: {{ now()->translatedFormat('j F Y, H:i') }} WIB
+        Dicetak otomatis oleh Sistem pada: {{ now()->translatedFormat('j F Y') }}
     </div>
 </body>
 </html>

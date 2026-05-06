@@ -159,7 +159,7 @@
     </div>
 
     <div class="footer-stamp">
-        Laporan ini dicetak secara otomatis oleh sistem pada {{ now()->translatedFormat('j F Y') }} WIB.
+        Laporan ini dicetak secara otomatis oleh sistem pada {{ now()->translatedFormat('j F Y') }} 
     </div>
 </body>
 </html>

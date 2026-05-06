@@ -50,23 +50,29 @@ public function cetakLaporan(Request $request)
         ->orderBy('tanggal', 'asc')
         ->get();
 
-    // --- TAMBAHKAN LOGIC SUMMARY BERIKUT ---
     $summary = [];
     foreach($data as $row) {
         foreach($row->details as $det) {
             $prodName = $det->produk ? ($det->produk->trashed() ? $det->produk->nama . ' (Dihapus)' : $det->produk->nama) : 'N/A';
-            if(!isset($summary[$prodName])) {
-                $summary[$prodName] = [
+            
+            // Tambahkan kategori pola ke dalam kunci summary agar total terpisah per kategori
+            $pola = $det->kategori_pola;
+            $key = $prodName . ($pola != 'Jadi' ? ' - ' . str_replace('_', ' ', $pola) : '');
+
+            if(!isset($summary[$key])) {
+                $summary[$key] = [
+                    'nama' => $prodName,
+                    'pola' => $pola,
+                    'jenis' => $det->produk->jenis, // Tambahkan baris ini
                     'qty' => 0,
                     'satuan' => $det->produk->satuan ?? '-'
                 ];
             }
-            $summary[$prodName]['qty'] += $det->qty;
+            $summary[$key]['qty'] += $det->qty;
         }
     }
-    // ---------------------------------------
 
-    $pdf = Pdf::loadView('admin.hasil_produksi.pdf_laporan', [
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.hasil_produksi.pdf_laporan', [
         'data' => $data,
         'summary' => $summary,
         'tgl_mulai' => $tgl_mulai,

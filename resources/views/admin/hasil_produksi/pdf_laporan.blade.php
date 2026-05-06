@@ -4,100 +4,21 @@
     <meta charset="utf-8">
     <title>Laporan Hasil Produksi {{ $konfigurasi->nama_cv }}</title>
     <style>
-        @page { 
-            margin: 1cm; 
-        }
-        
-        body { 
-            font-family: 'Helvetica', 'Arial', sans-serif; 
-            font-size: 9px; 
-            color: #333; 
-            line-height: 1.4; 
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Header Section */
-        .header { 
-            text-align: center; 
-            margin-bottom: 20px; 
-            padding-bottom: 8px;
-            border-bottom: 2px solid #2c3e50;
-        }
-        .header h2 { 
-            margin: 0; 
-            text-transform: uppercase; 
-            font-size: 16px; 
-            color: #2c3e50;
-        }
-        .header h3 { 
-            margin: 4px 0; 
-            font-size: 12px; 
-            color: #555;
-            letter-spacing: 1px;
-        }
-        .header p { 
-            margin: 2px 0; 
-            font-size: 10px;
-            color: #666;
-        }
-
-        /* Table Styling */
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            table-layout: fixed;
-            background-color: #fff;
-            margin-bottom: 20px;
-        }
-        
-        th { 
-            background-color: #D9E9FF;
-            color: #2c3e50;
-            font-weight: bold; 
-            text-transform: uppercase; 
-            font-size: 8.5px; 
-            padding: 8px 4px;
-            border: 1px solid #7f8c8d;
-            vertical-align: middle;
-        }
-
-        td { 
-            border: 1px solid #7f8c8d; 
-            padding: 6px 6px; 
-            vertical-align: top; 
-            word-wrap: break-word; 
-        }
-
-        /* Helpers */
+        @page { margin: 1cm; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 9px; color: #333; line-height: 1.4; }
+        .header { text-align: center; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 2px solid #2c3e50; }
+        .header h2 { margin: 0; text-transform: uppercase; font-size: 16px; color: #2c3e50; }
+        .header h3 { margin: 4px 0; font-size: 12px; color: #555; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { background-color: #D9E9FF; color: #2c3e50; font-weight: bold; text-transform: uppercase; font-size: 8px; padding: 8px 4px; border: 1px solid #7f8c8d; }
+        td { border: 1px solid #7f8c8d; padding: 6px; vertical-align: top; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .font-bold { font-weight: bold; }
-        .uppercase { text-transform: uppercase; }
-
-        /* Row Highlights */
         .bg-light { background-color: #f9fbfd; }
-        
-        h4 { 
-            margin: 15px 0 5px 0; 
-            font-size: 10px; 
-            color: #2c3e50; 
-            text-transform: uppercase;
-        }
-
-        .unit-text {
-            font-size: 8px;
-            color: #7f8c8d;
-            margin-left: 2px;
-        }
-
-        /* Footer Stamp */
-        .footer-stamp {
-            margin-top: 15px;
-            font-size: 8px;
-            color: #999;
-            font-style: italic;
-        }
+        .unit-text { font-size: 8px; color: #7f8c8d; margin-left: 2px; }
+        .footer-stamp { margin-top: 15px; font-size: 8px; color: #999; font-style: italic; }
+        h4 { margin: 15px 0 5px 0; font-size: 10px; color: #2c3e50; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -105,74 +26,92 @@
         <h2>{{ $konfigurasi->nama_cv ?? 'IKN COCO COIR' }}</h2>
         <h3>LAPORAN HASIL PRODUKSI</h3>
         <p>Periode: 
-            <strong>{{ \Carbon\Carbon::parse($tgl_mulai)->translatedFormat('j F Y') }}</strong> 
-            s/d 
+            <strong>{{ \Carbon\Carbon::parse($tgl_mulai)->translatedFormat('j F Y') }}</strong> s/d 
             <strong>{{ \Carbon\Carbon::parse($tgl_selesai)->translatedFormat('j F Y') }}</strong>
         </p>
     </div>
-    <table>
-        <thead>
-            <tr>
-                <th width="4%">No</th>
-                <th width="16%">Tanggal</th>
-                <th width="20%">Kode Produksi</th>
-                <th width="40%">Produk</th>
-                <th width="20%">Jumlah Hasil</th>
-            </tr>
-        </thead>
-        <tbody>
-            @php $no = 1; @endphp
-            @forelse($data as $key => $row)
-                @php 
-                    $rowCount = $row->details->count(); 
-                    $rowClass = ($no % 2 == 0) ? 'bg-light' : '';
-                @endphp
-                @foreach($row->details as $index => $det)
-                <tr class="{{ $rowClass }}">
-                    @if($index === 0)
-                        <td rowspan="{{ $rowCount }}" class="text-center font-bold">{{ $no++ }}</td>
-                        <td rowspan="{{ $rowCount }}" class="text-center">
-                            {{ \Carbon\Carbon::parse($row->tanggal)->translatedFormat('j F Y') }}
-                        </td>
-                        <td rowspan="{{ $rowCount }}" class="text-center font-bold" style="color: #2c3e50;">
-                             #{{ $row->kode_produksi }}
-                        </td>
+
+<!-- Bagian Tabel Utama -->
+<table>
+    <thead>
+        <tr>
+            <th width="4%">No</th>
+            <th width="18%">Tanggal</th> <!-- Lebar sedikit ditambah agar tanggal tidak terpotong -->
+            <th width="20%">Kode</th>
+            <th width="28%">Produk</th>
+            <th width="16%">Pola</th>
+            <th width="15%">Jumlah</th>
+        </tr>
+    </thead>
+    <tbody>
+        @php $no = 1; @endphp
+        @forelse($data as $row)
+            @php 
+                $rowCount = $row->details->count(); 
+                $rowClass = ($no % 2 == 0) ? 'bg-light' : '';
+            @endphp
+            @foreach($row->details as $index => $det)
+            <tr class="{{ $rowClass }}">
+                @if($index === 0)
+                    <td rowspan="{{ $rowCount }}" class="text-center font-bold">{{ $no++ }}</td>
+                    <td rowspan="{{ $rowCount }}" class="text-center">
+                        {{-- Perubahan format tanggal di sini --}}
+                        {{ \Carbon\Carbon::parse($row->tanggal)->translatedFormat('j F Y') }}
+                    </td>
+                    <td rowspan="{{ $rowCount }}" class="text-center font-bold">
+                         #{{ $row->kode_produksi }}
+                    </td>
+                @endif
+
+                <td>
+                    {{ $det->produk ? ($det->produk->trashed() ? $det->produk->nama . ' (Dihapus)' : $det->produk->nama) : 'N/A' }}
+                </td>
+                <td class="text-center">
+                    @if(strtolower($det->produk->jenis ?? '') == 'jadi')
+                        Produk Jadi
+                    @else
+                        {{ $det->kategori_pola === 'Jadi' ? '' : str_replace('_', ' ', $det->kategori_pola) }}
                     @endif
-
-                    <td>
-                        {{ $det->produk ? ($det->produk->trashed() ? $det->produk->nama . ' (Dihapus)' : $det->produk->nama) : 'Produk Tidak Ditemukan' }}
-                    </td>
-                    <td class="text-right">
-                        <span class="font-bold">{{ number_format($det->qty, 0, ',', '.') }}</span>
-                        <span class="unit-text">{{ $det->produk->satuan ?? '' }}</span>
-                    </td>
-                </tr>
-                @endforeach
-            @empty
-            <tr>
-                <td colspan="5" class="text-center" style="padding: 20px;">Tidak ada data hasil produksi pada periode ini.</td>
+                </td>
+                <td class="text-right">
+                    <span class="font-bold">{{ number_format($det->qty, 0, ',', '.') }}</span>
+                    <span class="unit-text">{{ $det->produk->satuan ?? '' }}</span>
+                </td>
             </tr>
-            @endforelse
-        </tbody>
-    </table>
+            @endforeach
+        @empty
+            <tr>
+                <td colspan="6" class="text-center">Tidak ada data hasil produksi pada periode ini.</td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
 
-    <div style="width: 50%;">
+    <div style="width: 60%;">
         <h4>Total Akumulasi Hasil Produksi</h4>
         <table>
             <thead>
                 <tr>
-                    <th width="60%">Nama Produk</th>
+                    <th width="50%">Nama Produk</th>
+                    <th width="20%">Pola</th>
                     <th width="30%">Total Qty</th>
                 </tr>
             </thead>
             <tbody>
                 @php $i = 0; @endphp
-                @foreach($summary as $nama => $info)
+                @foreach($summary as $item)
                 <tr class="{{ $i % 2 != 0 ? 'bg-light' : '' }}">
-                    <td>{{ $nama }}</td>
+                    <td>{{ $item['nama'] }}</td>
+                    <td class="text-center">
+                        @if(strtolower($item['jenis'] ?? '') == 'jadi')
+                            Produk Jadi
+                        @else
+                            {{ $item['pola'] === 'Jadi' ? '' : str_replace('_', ' ', $item['pola']) }}
+                        @endif
+                    </td>
                     <td class="text-right">
-                        <span class="font-bold">{{ number_format($info['qty'], 0, ',', '.') }}</span>
-                        <span class="unit-text">{{ $info['satuan'] }}</span>
+                        <span class="font-bold">{{ number_format($item['qty'], 0, ',', '.') }}</span>
+                        <span class="unit-text">{{ $item['satuan'] }}</span>
                     </td>
                 </tr>
                 @php $i++; @endphp
@@ -182,7 +121,7 @@
     </div>
 
     <div class="footer-stamp">
-        Dicetak otomatis oleh Sistem pada: {{ now()->translatedFormat('j F Y, H:i') }} WIB
+        Dicetak otomatis pada: {{ now()->translatedFormat('j F Y') }}
     </div>
 </body>
 </html>
