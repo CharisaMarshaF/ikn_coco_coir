@@ -36,13 +36,13 @@
         .data-table { 
             width: 100%; 
             border-collapse: collapse; 
-            table-layout: fixed; 
+            table-layout: fixed; /* WAJIB biar width kepakai */
         }
         
         .data-table th { 
             background-color: #D9E9FF; 
             border: 1px solid #777; 
-            padding: 10px 5px; 
+            padding: 8px 4px; 
             text-align: center; 
             text-transform: uppercase;
             font-weight: bold;
@@ -51,7 +51,7 @@
         
         .data-table td { 
             border: 1px solid #777; 
-            padding: 8px 6px; 
+            padding: 6px 4px; 
             word-wrap: break-word; 
             vertical-align: middle; 
         }
@@ -63,11 +63,37 @@
         .row-item:nth-child(even) {
             background-color: #fafafa;
         }
+
+        .bg-footer {
+            background-color: #eee;
+        }
+
+        /* ===== FIX UTAMA KOLOM ===== */
+
+        .col-no { 
+            width: 20px !important;
+        }
+
+        .col-tgl { width: 80px; }
+        .col-ket { width: auto; }
+        .col-masuk { width: 90px; }
+        .col-keluar { width: 90px; }
+        .col-saldo { width: 100px; }
+
+        /* Paksa kolom NO kecil */
+        .data-table th.col-no,
+        .data-table td.col-no {
+            padding: 2px !important;
+            font-size: 8pt;
+            text-align: center;
+            white-space: nowrap;
+        }
+
     </style>
 </head>
 <body>
 
-    <!-- Tabel Header Informasi -->
+    <!-- Header -->
     <table class="info-table">
         <tr>
             <td class="info-label">Nama Rekening</td>
@@ -83,88 +109,149 @@
         </tr>
     </table>
 
-    <!-- Tabel Data Transaksi -->
+    <!-- Table -->
     <table class="data-table">
         <thead>
             <tr>
-                <th width="35">NO</th>
-                <th width="100">TANGGAL</th>
-                <th>KETERANGAN</th>
-                <th width="110">PEMASUKAN</th>
-                <th width="110">PENGELUARAN</th>
-                <th width="120">SALDO</th>
+                <th width="5%">NO</th>
+                <th width="15%" class="col-tgl">TANGGAL</th>
+                <th width="30%" class="col-ket">KETERANGAN</th>
+                <th width="15%" class="col-masuk">PEMASUKAN</th>
+                <th width="15%" class="col-keluar">PENGELUARAN</th>
+                <th width="20%" class="col-saldo">SALDO</th>
             </tr>
         </thead>
         <tbody>
-            {{-- Baris Saldo Awal --}}
+
+            <!-- Saldo Awal -->
             <tr>
-                <td class="text-center">1</td>
-                <td class="text-center">{{ \Carbon\Carbon::parse($tgl_mulai)->translatedFormat('j F Y') }}</td>
+                <td width="5%" class="text-center">1</td>
+                <td class="text-center">
+                    {{ \Carbon\Carbon::parse($tgl_mulai)->translatedFormat('j F Y') }}
+                </td>
                 <td class="font-bold">SALDO AWAL</td>
                 <td class="text-right">-</td>
                 <td class="text-right">-</td>
-                <td class="text-right">{{ number_format($saldoAwal, 0, ',', '.') }}</td>
+                <td class="text-right font-bold">
+                    {{ number_format($saldoAwal, 0, ',', '.') }}
+                </td>
             </tr>
 
             @php 
                 $runningSaldo = $saldoAwal; 
                 $no = 2;
+                $totalMasuk = 0;
+                $totalKeluar = 0;
             @endphp
 
             @foreach($data as $kas)
+
                 @if($kas->kategori == 'operasional' && $kas->details->count() > 0)
-                    @foreach($kas->details as $index => $detail)
+
+                    @foreach($kas->details as $detail)
+
                         @php 
                             $isMasuk = $kas->jenis == 'masuk';
-                            $nominal = $detail->subtotal;
-                            $runningSaldo = $isMasuk ? ($runningSaldo + $nominal) : ($runningSaldo - $nominal);
+                            $nominal = (int)$detail->subtotal;
+
+                            $runningSaldo = $isMasuk 
+                                ? $runningSaldo + $nominal 
+                                : $runningSaldo - $nominal;
+
+                            if($isMasuk) $totalMasuk += $nominal;
+                            else $totalKeluar += $nominal;
                         @endphp
+
                         <tr class="row-item">
-                            <td class="text-center">{{ $no++ }}</td>
-                            <td class="text-center">
+                            <td width="5%" class="text-center">{{ $no++ }}</td>
+
+                            <td width="15%" class="text-center">
                                 {{ \Carbon\Carbon::parse($kas->tanggal)->translatedFormat('j F Y') }}
                             </td>
-                            <td>
-                                {{ $detail->nama_item }} 
-                                <span style="font-size: 8pt; color: #666;">({{ $detail->jumlah }}x)</span>
+
+                            <td width="30%">
+                                {{ $detail->nama_item }}
+                                <span style="font-size: 8pt; color: #666;">
+                                    ({{ (int)$detail->jumlah }}x)
+                                </span>
                             </td>
-                            <td class="text-right">
+
+                            <td width="15%" class="text-right">
                                 {{ $isMasuk ? number_format($nominal, 0, ',', '.') : '-' }}
                             </td>
-                            <td class="text-right">
+
+                            <td width="15%" class="text-right">
                                 {{ !$isMasuk ? number_format($nominal, 0, ',', '.') : '-' }}
                             </td>
-                            <td class="text-right font-bold">
+
+                            <td width="20%" class="text-right font-bold">
                                 {{ number_format($runningSaldo, 0, ',', '.') }}
                             </td>
                         </tr>
+
                     @endforeach
+
                 @else
+
                     @php 
                         $isMasuk = $kas->jenis == 'masuk';
-                        $nominal = $kas->total_nominal;
-                        $runningSaldo = $isMasuk ? ($runningSaldo + $nominal) : ($runningSaldo - $nominal);
+                        $nominal = (int)$kas->total_nominal;
+
+                        $runningSaldo = $isMasuk 
+                            ? $runningSaldo + $nominal 
+                            : $runningSaldo - $nominal;
+
+                        if($isMasuk) $totalMasuk += $nominal;
+                        else $totalKeluar += $nominal;
                     @endphp
+
                     <tr class="row-item">
-                        <td class="text-center">{{ $no++ }}</td>
+                        <td class="col-no">{{ $no++ }}</td>
+
                         <td class="text-center">
                             {{ \Carbon\Carbon::parse($kas->tanggal)->translatedFormat('j F Y') }}
                         </td>
+
                         <td>{{ $kas->keterangan }}</td>
+
                         <td class="text-right">
                             {{ $isMasuk ? number_format($nominal, 0, ',', '.') : '-' }}
                         </td>
+
                         <td class="text-right">
                             {{ !$isMasuk ? number_format($nominal, 0, ',', '.') : '-' }}
                         </td>
+
                         <td class="text-right font-bold">
                             {{ number_format($runningSaldo, 0, ',', '.') }}
                         </td>
                     </tr>
+
                 @endif
+
             @endforeach
+
         </tbody>
+
+        <tfoot>
+            <tr class="bg-footer font-bold">
+                <td colspan="3" class="text-right">TOTAL SALDO</td>
+
+                <td class="text-right">
+                    {{ number_format($totalMasuk, 0, ',', '.') }}
+                </td>
+
+                <td class="text-right">
+                    {{ number_format($totalKeluar, 0, ',', '.') }}
+                </td>
+
+                <td class="text-right" style="background-color:#D9E9FF;">
+                    {{ number_format($runningSaldo, 0, ',', '.') }}
+                </td>
+            </tr>
+        </tfoot>
     </table>
+
 
 </body>
 </html>

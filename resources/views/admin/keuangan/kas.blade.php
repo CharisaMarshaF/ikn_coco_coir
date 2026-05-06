@@ -53,16 +53,16 @@
         <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
 <form action="{{ route('kas.index') }}" method="GET" id="filterForm" class="flex flex-wrap items-center gap-3">
     <div class="flex items-center gap-2">
-        <label class="whitespace-nowrap">Rekening:</label>
-        <select name="rekening_id" class="form-control box" onchange="updatePdfLink()">
-            <option value="">Semua Rekening</option>
-            @foreach ($rekenings as $rek)
-                <option value="{{ $rek->id }}" {{ request('rekening_id') == $rek->id ? 'selected' : '' }}>
-                    {{ $rek->nama }}
-                </option>
-            @endforeach
-        </select>
-    </div>
+    <label class="whitespace-nowrap">Rekening:</label>
+    <select name="rekening_id" id="rekening_select_filter" class="form-control box" onchange="updatePdfLink()">
+    <option value="" selected disabled>-- Pilih Rekening --</option>
+    @foreach ($rekenings as $rek)
+        <option value="{{ $rek->id }}" {{ request('rekening_id') == $rek->id ? 'selected' : '' }}>
+            {{ $rek->nama }}
+        </option>
+    @endforeach
+</select>
+</div>
     <div class="flex items-center gap-2">
         <label class="whitespace-nowrap">Dari:</label>
         <input type="date" name="tgl_mulai" id="filter_tgl_mulai" class="form-control box"
@@ -76,21 +76,57 @@
     
     <button type="submit" class="btn btn-secondary shadow-md">Filter Tabel</button>
 
-    <a id="btnExportPdf" href="{{ route('kas.pdf', request()->all()) }}" target="_blank"
-        class="btn btn-outline-danger shadow-md ml-2">
-        <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Export PDF
-    </a>
+    <!-- Bagian Button Export PDF yang diubah -->
+<!-- Tambahkan target="_blank" -->
+<a id="btnExportPdf" href="javascript:void(0)" 
+   target="_blank"
+   onclick="return validateAndExport(this)"
+   class="btn btn-outline-danger shadow-md ml-2 opacity-50 cursor-not-allowed" 
+   data-enabled="false">
+    <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Export PDF
+</a>
 </form>
 
 <script>
-// Script sederhana untuk memastikan link PDF selalu sinkron dengan inputan user
 function updatePdfLink() {
     const form = document.getElementById('filterForm');
     const formData = new FormData(form);
-    const params = new URLSearchParams(formData).toString();
-    const baseUrl = "{{ route('kas.pdf') }}";
-    document.getElementById('btnExportPdf').href = baseUrl + "?" + params;
+    const rekeningId = formData.get('rekening_id');
+    const btnPdf = document.getElementById('btnExportPdf');
+    
+    if (rekeningId && rekeningId !== "") {
+        // Aktifkan tombol secara visual
+        btnPdf.classList.remove('opacity-50', 'cursor-not-allowed');
+        btnPdf.dataset.enabled = "true";
+        
+        // Buat query string dari semua input form (tgl_mulai, tgl_selesai, rekening_id)
+        const params = new URLSearchParams(formData).toString();
+        const baseUrl = "{{ route('kas.pdf') }}";
+        
+        // Update href dengan parameter lengkap
+        btnPdf.href = baseUrl + "?" + params;
+    } else {
+        // Matikan tombol jika rekening belum dipilih
+        btnPdf.classList.add('opacity-50', 'cursor-not-allowed');
+        btnPdf.dataset.enabled = "false";
+        btnPdf.href = "javascript:void(0)";
+    }
 }
+
+function validateAndExport(el) {
+    // Jika data-enabled adalah false, cegah pembukaan tab baru
+    if (el.dataset.enabled === "false") {
+        alert("Silakan pilih rekening terlebih dahulu sebelum mengekspor laporan.");
+        return false; // Membatalkan aksi href dan target="_blank"
+    }
+    // Jika true, biarkan browser menjalankan target="_blank" secara alami
+    return true;
+}
+
+// Jalankan saat halaman pertama kali dimuat untuk mengecek status awal
+document.addEventListener("DOMContentLoaded", function() {
+    updatePdfLink();
+});
 </script>
         </div>
 

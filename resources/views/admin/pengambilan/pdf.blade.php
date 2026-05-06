@@ -62,7 +62,6 @@
                         <td class="text-center" rowspan="{{ $items->count() }}">{{ $no++ }}</td>
                         <td rowspan="{{ $items->count() }}">
                             {{ \Carbon\Carbon::parse($row->pengambilan->tanggal)->translatedFormat('d F Y') }}
-                            <div style="font-size: 8px; color: #666; margin-top: 2px;">ID: #{{ $row->pengambilan_id }}</div>
                         </td>
                     @endif
 

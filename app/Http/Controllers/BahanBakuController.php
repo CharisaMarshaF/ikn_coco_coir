@@ -59,7 +59,7 @@ class BahanBakuController extends Controller
         $logs = StockLog::where('item_id', $bahanId)
             ->where('item_type', 'bahan_baku')
             ->whereBetween('created_at', [$start, $end])
-            ->orderBy('created_at', 'asc')
+            ->orderBy('created_at', 'asc')          
             ->get();
 
         // 3. Mapping data untuk tabel (No, Tanggal, Pembelian/Masuk, Produksi/Keluar, Stok)

@@ -189,7 +189,7 @@ public function exportPdf(Request $request)
         'tgl_selesai' => $tgl_selesai,
         'saldoAwal' => $saldoAwalRiil,
         'namaRekening' => $namaRekening, // Opsional: tampilkan di PDF
-    ])->setPaper('a4', 'landscape');
+    ])->setPaper('a4', 'potrait');
 
     return $pdf->stream('Laporan_Kas_'.$namaRekening.'.pdf');
 }

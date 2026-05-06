@@ -39,11 +39,13 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
 
     Route::resource('users', UserController::class);
     Route::resource('supplier', SupplierController::class);
+    Route::get('/supplier/{id}/transaksi', [SupplierController::class, 'transaksi'])->name('supplier.transaksi');
     Route::get('/bahan-baku/laporan', [BahanBakuController::class, 'cetakLaporan'])->name('bahan-baku.laporan');
     Route::resource('bahan-baku', BahanBakuController::class);
     Route::get('/produk/laporan', [App\Http\Controllers\ProdukController::class, 'cetakLaporan'])->name('produk.laporan');
     Route::resource('produk', ProdukController::class);
     Route::resource('client', ClientController::class);
+    Route::get('/client/{id}/history', [ClientController::class, 'history'])->name('client.history');
     Route::resource('rekening', RekeningController::class);
     Route::resource('pembelian', PembelianController::class);
     Route::post('/pembelian/{id}/bayar', [PembelianController::class, 'bayar'])->name('pembelian.bayar');

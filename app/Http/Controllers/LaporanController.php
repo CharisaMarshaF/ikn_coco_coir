@@ -84,7 +84,7 @@ public function cetakPenjualan(Request $request)
     ];
 
     $pdf = Pdf::loadView('admin.laporan.pdf_penjualan', compact('data', 'summary', 'start_date', 'end_date'))
-              ->setPaper('a4', 'portrait');
+              ->setPaper('a4', 'landscape');
     
     return $pdf->stream('Laporan-Penjualan-Berhasil.pdf');
 }

@@ -40,41 +40,48 @@ class PengambilanBahanController extends Controller
         $title = 'Data Pengambilan Bahan';
         return view('admin.pengambilan.index', compact('pengambilan', 'title', 'dari', 'sampai'));
     }
-public function cetakPdf(Request $request)
-{
-    // Menggunakan Carbon untuk tanggal default
-    $dari = $request->get('dari') ?? \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
-    $sampai = $request->get('sampai') ?? \Carbon\Carbon::now()->format('Y-m-d');
 
-    // Query Detail agar lebih mudah menampilkan list per item di PDF
-    $data = PengambilanBahanDetail::with(['bahan' => function ($q) {
-            $q->withTrashed(); 
-        }, 'pengambilan'])
-        ->whereHas('pengambilan', function($q) use ($dari, $sampai) {
-            $q->whereBetween('tanggal', [$dari, $sampai]);
-        })
-        ->get();
+    public function cetakPdf(Request $request)
+    {
+        // 1. Ambil input tanggal atau set default ke bulan ini
+        $dari = $request->get('dari') ?? \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
+        $sampai = $request->get('sampai') ?? \Carbon\Carbon::now()->format('Y-m-d');
 
-    // Summary akumulasi per bahan
-    $summary = $data->groupBy('bahan_id')->map(function ($items) {
-        $bahan = $items->first()->bahan;
-        return [
-            'nama' => $bahan ? ($bahan->trashed() ? $bahan->nama . ' (Dihapus)' : $bahan->nama) : 'Bahan Tidak Ditemukan',
-            'satuan' => $bahan->satuan ?? '-',
-            'total_qty' => $items->sum('qty')
-        ];
-    });
+        // 2. Query Detail dengan JOIN ke tabel master 'pengambilan_bahan' agar bisa urut tanggal (ASC)
+        $data = PengambilanBahanDetail::with(['bahan' => function ($q) {
+                $q->withTrashed(); 
+            }, 'pengambilan'])
+            // Sesuaikan nama tabel join: 'pengambilan_bahan' (sesuai properti $table di model)
+            ->join('pengambilan_bahan', 'pengambilan_bahan_detail.pengambilan_id', '=', 'pengambilan_bahan.id')
+            ->select('pengambilan_bahan_detail.*')
+            ->whereBetween('pengambilan_bahan.tanggal', [$dari, $sampai])
+            ->orderBy('pengambilan_bahan.tanggal', 'asc') // Urutan dari tanggal tertua ke terbaru
+            ->orderBy('pengambilan_bahan.id', 'asc')      // Urutan kedua berdasarkan ID jika tanggal sama
+            ->get();
 
-    $pdf = Pdf::loadView('admin.pengambilan.pdf', [
-        'data' => $data,
-        'summary' => $summary,
-        'dari' => $dari,
-        'sampai' => $sampai,
-        'konfigurasi' => \App\Models\CompanyProfile::first()
-    ])->setPaper('a4', 'portrait');
+        // 3. Kelompokkan data untuk ringkasan di bawah laporan
+        $summary = $data->groupBy('bahan_id')->map(function ($items) {
+            $bahan = $items->first()->bahan;
+            return [
+                'nama' => $bahan ? ($bahan->trashed() ? $bahan->nama . ' (Dihapus)' : $bahan->nama) : 'Bahan Tidak Ditemukan',
+                'satuan' => $bahan->satuan ?? '-',
+                'total_qty' => $items->sum('qty')
+            ];
+        });
 
-    return $pdf->stream("Laporan_Pengambilan_{$dari}_sd_{$sampai}.pdf");
-}
+        // 4. Generate PDF
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pengambilan.pdf', [
+            'data' => $data,
+            'summary' => $summary,
+            'dari' => $dari,
+            'sampai' => $sampai,
+            'konfigurasi' => \App\Models\CompanyProfile::first()
+        ])->setPaper('a4', 'portrait');
+
+        // 5. Tampilkan PDF di Browser
+        return $pdf->stream("Laporan_Pengambilan_{$dari}_sd_{$sampai}.pdf");
+    }
+    
     public function create()
     {
         $bahanBaku = BahanBaku::with('stok')->orderBy('nama', 'asc')->get();
@@ -191,22 +198,22 @@ public function cetakPdf(Request $request)
     {
         $dari = $request->get('dari');
         $sampai = $request->get('sampai');
-
-        // Ambil data detail bahan yang diambil berdasarkan range tanggal
         $query = PengambilanBahanDetail::with(['bahan', 'pengambilan'])
+            ->join('pengambilan_bahans', 'pengambilan_bahan_details.pengambilan_bahan_id', '=', 'pengambilan_bahans.id')
+            ->select('pengambilan_bahan_details.*') // Pastikan hanya memilih kolom dari detail
             ->whereHas('pengambilan', function ($q) use ($dari, $sampai) {
                 if ($dari && $sampai) {
                     $q->whereBetween('tanggal', [$dari, $sampai]);
                 }
-            });
+            })
+            ->orderBy('pengambilan_bahans.tanggal', 'asc'); // Mengurutkan dari tanggal terkecil
 
         $data = $query->get();
 
-        // Hitung total akumulasi per bahan untuk ringkasan di bawah
         $summary = $data->groupBy('bahan_id')->map(function ($items) {
             return [
-                'nama' => $items->first()->bahan->nama,
-                'satuan' => $items->first()->bahan->satuan,
+                'nama' => $items->first()->bahan->nama ?? 'Bahan Tidak Ditemukan',
+                'satuan' => $items->first()->bahan->satuan ?? '-',
                 'total_qty' => $items->sum('qty')
             ];
         });

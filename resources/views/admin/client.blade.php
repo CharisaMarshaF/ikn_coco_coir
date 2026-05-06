@@ -32,6 +32,9 @@
                             <td>{{ Str::limit($c->alamat, 50) ?? '-' }}</td>
                             <td class="table-report__action w-56">
                                 <div class="flex justify- items-center">
+                                    <a class="flex items-center mr-3 text-pending" href="{{ route('client.history', $c->id) }}"> 
+                                        <i data-lucide="history" class="w-4 h-4 mr-1"></i> Histori 
+                                    </a>
                                     <a class="flex items-center mr-3 text-primary" href="javascript:;" data-tw-toggle="modal" data-tw-target="#modal-edit-{{ $c->id }}"> 
                                         <i data-lucide="check-square" class="w-4 h-4 mr-1"></i> Edit 
                                     </a>

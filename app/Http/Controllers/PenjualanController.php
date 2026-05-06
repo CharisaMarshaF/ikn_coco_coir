@@ -163,85 +163,85 @@ class PenjualanController extends Controller
         return view('admin.penjualan.show', compact('penjualan', 'title'));
     }
 
-public function cancel($id)
-{
-    try {
-        DB::beginTransaction();
+    public function cancel($id)
+    {
+        try {
+            DB::beginTransaction();
 
-        // 1. Ambil data penjualan beserta detail dan data return-nya
-        $penjualan = Penjualan::with(['detail', 'returns.detail'])->findOrFail($id);
+            // 1. Ambil data penjualan beserta detail dan data return-nya
+            $penjualan = Penjualan::with(['detail', 'returns.detail'])->findOrFail($id);
 
-        // Proteksi: Hanya transaksi yang sudah berhasil atau status return yang bisa dicancel
-        if (!in_array($penjualan->status, ['berhasil', 'return'])) {
-            throw new \Exception("Transaksi ini tidak dapat dibatalkan (Status: {$penjualan->status}).");
-        }
-
-        // --- LOGIKA PENGEMBALIAN STOK DARI PENJUALAN ASLI ---
-        foreach ($penjualan->detail as $item) {
-            $stokRecord = StokProduk::withTrashed()->where('produk_id', $item->produk_id)->first();
-            $stokLama = $stokRecord->jumlah ?? 0;
-
-            // Kembalikan stok fisik yang keluar saat penjualan
-            StokHelper::updateStokProduk($item->produk_id, $item->qty);
-
-            // Catat riwayat ke StockLog
-            StockLog::create([
-                'item_id'      => $item->produk_id,
-                'item_type'    => 'produk',
-                'jenis'        => 'masuk',
-                'jumlah'       => $item->qty,
-                'stok_sebelum' => $stokLama,
-                'stok_sesudah' => $stokLama + $item->qty,
-                'sumber'       => 'pembatalan',
-                'keterangan'   => "Pembatalan Penjualan #{$penjualan->id}",
-                'user_id'      => auth()->id()
-            ]);
-        }
-
-        // --- LOGIKA PEMBERSIHAN DATA RETURN ---
-        if ($penjualan->returns->count() > 0) {
-            foreach ($penjualan->returns as $returnHeader) {
-                
-                // A. Jika saat return barang dimasukkan ke stok, maka saat cancel stok harus dikurangi lagi
-                // agar tidak terjadi double stok (karena stok penjualan asli sudah dikembalikan di atas)
-                foreach ($returnHeader->detail as $retDetail) {
-                    // Cek apakah produk ini ada recordnya
-                    $stokRecordRet = StokProduk::withTrashed()->where('produk_id', $retDetail->produk_id)->first();
-                    $stokLamaRet = $stokRecordRet->jumlah ?? 0;
-
-                    // Kita kurangi stok sejumlah yang pernah di-return (karena di atas kita sudah mengembalikan FULL qty penjualan)
-                    StokHelper::updateStokProduk($retDetail->produk_id, -$retDetail->qty);
-
-                    // Catat Log Pengurangan (Penyesuaian akibat cancel return)
-                    StockLog::create([
-                        'item_id'      => $retDetail->produk_id,
-                        'item_type'    => 'produk',
-                        'jenis'        => 'keluar',
-                        'jumlah'       => $retDetail->qty,
-                        'stok_sebelum' => $stokLamaRet,
-                        'stok_sesudah' => $stokLamaRet - $retDetail->qty,
-                        'sumber'       => 'pembatalan',
-                        'keterangan'   => "Koreksi Stok: Pembatalan Return dari Transaksi #{$penjualan->id}",
-                        'user_id'      => auth()->id()
-                    ]);
-                }
-
-                // B. Hapus Detail Return dan Header Return
-                $returnHeader->detail()->delete();
-                $returnHeader->delete();
+            // Proteksi: Hanya transaksi yang sudah berhasil atau status return yang bisa dicancel
+            if (!in_array($penjualan->status, ['berhasil', 'return'])) {
+                throw new \Exception("Transaksi ini tidak dapat dibatalkan (Status: {$penjualan->status}).");
             }
+
+            // --- LOGIKA PENGEMBALIAN STOK DARI PENJUALAN ASLI ---
+            foreach ($penjualan->detail as $item) {
+                $stokRecord = StokProduk::withTrashed()->where('produk_id', $item->produk_id)->first();
+                $stokLama = $stokRecord->jumlah ?? 0;
+
+                // Kembalikan stok fisik yang keluar saat penjualan
+                StokHelper::updateStokProduk($item->produk_id, $item->qty);
+
+                // Catat riwayat ke StockLog
+                StockLog::create([
+                    'item_id'      => $item->produk_id,
+                    'item_type'    => 'produk',
+                    'jenis'        => 'masuk',
+                    'jumlah'       => $item->qty,
+                    'stok_sebelum' => $stokLama,
+                    'stok_sesudah' => $stokLama + $item->qty,
+                    'sumber'       => 'pembatalan',
+                    'keterangan'   => "Pembatalan Penjualan #{$penjualan->id}",
+                    'user_id'      => auth()->id()
+                ]);
+            }
+
+            // --- LOGIKA PEMBERSIHAN DATA RETURN ---
+            if ($penjualan->returns->count() > 0) {
+                foreach ($penjualan->returns as $returnHeader) {
+                    
+                    // A. Jika saat return barang dimasukkan ke stok, maka saat cancel stok harus dikurangi lagi
+                    // agar tidak terjadi double stok (karena stok penjualan asli sudah dikembalikan di atas)
+                    foreach ($returnHeader->detail as $retDetail) {
+                        // Cek apakah produk ini ada recordnya
+                        $stokRecordRet = StokProduk::withTrashed()->where('produk_id', $retDetail->produk_id)->first();
+                        $stokLamaRet = $stokRecordRet->jumlah ?? 0;
+
+                        // Kita kurangi stok sejumlah yang pernah di-return (karena di atas kita sudah mengembalikan FULL qty penjualan)
+                        StokHelper::updateStokProduk($retDetail->produk_id, -$retDetail->qty);
+
+                        // Catat Log Pengurangan (Penyesuaian akibat cancel return)
+                        StockLog::create([
+                            'item_id'      => $retDetail->produk_id,
+                            'item_type'    => 'produk',
+                            'jenis'        => 'keluar',
+                            'jumlah'       => $retDetail->qty,
+                            'stok_sebelum' => $stokLamaRet,
+                            'stok_sesudah' => $stokLamaRet - $retDetail->qty,
+                            'sumber'       => 'pembatalan',
+                            'keterangan'   => "Koreksi Stok: Pembatalan Return dari Transaksi #{$penjualan->id}",
+                            'user_id'      => auth()->id()
+                        ]);
+                    }
+
+                    // B. Hapus Detail Return dan Header Return
+                    $returnHeader->detail()->delete();
+                    $returnHeader->delete();
+                }
+            }
+
+            // 3. Update status penjualan menjadi cancel
+            $penjualan->update(['status' => 'cancel']);
+
+            DB::commit();
+            return back()->with('success', 'Transaksi berhasil dibatalkan. Data return terkait telah dihapus dan stok telah disesuaikan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal membatalkan transaksi: ' . $e->getMessage());
         }
-
-        // 3. Update status penjualan menjadi cancel
-        $penjualan->update(['status' => 'cancel']);
-
-        DB::commit();
-        return back()->with('success', 'Transaksi berhasil dibatalkan. Data return terkait telah dihapus dan stok telah disesuaikan.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', 'Gagal membatalkan transaksi: ' . $e->getMessage());
     }
-}
 
     public function showReturn($id)
     {
@@ -456,71 +456,71 @@ public function cancel($id)
         return view('admin.penjualan.return_list', compact('returns', 'title'));
     }
 
-public function resendReturn(Request $request, $return_id)
-{
-    $request->validate([
-        'tanggal_kirim' => 'required|date',
-    ]);
-
-    try {
-        DB::beginTransaction();
-
-        // Load detail return BESERTA produknya
-        $returnHeader = \App\Models\ReturnPenjualan::with(['detail.produk', 'penjualan'])->findOrFail($return_id);
-        
-        if ($returnHeader->is_resend) {
-            return back()->with('error', 'Gagal: Barang sudah pernah dikirim ulang.');
-        }
-
-        // Buat Penjualan Baru
-        $newPenjualan = Penjualan::create([
-            'client_id' => $returnHeader->penjualan->client_id,
-            'tanggal'   => $request->tanggal_kirim,
-            'total'     => 0,
-            'status'    => 'berhasil',
-            'keterangan' => "Kirim ulang barang dari Return #" . $returnHeader->nomor_return
+    public function resendReturn(Request $request, $return_id)
+    {
+        $request->validate([
+            'tanggal_kirim' => 'required|date',
         ]);
 
-        foreach ($returnHeader->detail as $item) {
-            // Ambil stok lama untuk log
-            $stokRecord = StokProduk::where('produk_id', $item->produk_id)->first();
-            $stokLama = $stokRecord->jumlah ?? 0;
+        try {
+            DB::beginTransaction();
 
-            // Simpan Detail Penjualan Baru (Replacement)
-            PenjualanDetail::create([
-                'penjualan_id' => $newPenjualan->id,
-                'produk_id'    => $item->produk_id, // Pastikan ID produk masuk
-                'qty'          => $item->qty,
-                'harga'        => 0,
-                'subtotal'     => 0,
+            // Load detail return BESERTA produknya
+            $returnHeader = \App\Models\ReturnPenjualan::with(['detail.produk', 'penjualan'])->findOrFail($return_id);
+            
+            if ($returnHeader->is_resend) {
+                return back()->with('error', 'Gagal: Barang sudah pernah dikirim ulang.');
+            }
+
+            // Buat Penjualan Baru
+            $newPenjualan = Penjualan::create([
+                'client_id' => $returnHeader->penjualan->client_id,
+                'tanggal'   => $request->tanggal_kirim,
+                'total'     => 0,
+                'status'    => 'berhasil',
+                'keterangan' => "Kirim ulang barang dari Return #" . $returnHeader->nomor_return
             ]);
 
-            // Update Stok (Barang keluar lagi)
-            StokHelper::updateStokProduk($item->produk_id, -$item->qty);
+            foreach ($returnHeader->detail as $item) {
+                // Ambil stok lama untuk log
+                $stokRecord = StokProduk::where('produk_id', $item->produk_id)->first();
+                $stokLama = $stokRecord->jumlah ?? 0;
 
-            // Log Stok
-            StockLog::create([
-                'item_id' => $item->produk_id,
-                'item_type' => 'produk',
-                'jenis' => 'keluar',
-                'jumlah' => $item->qty,
-                'stok_sebelum' => $stokLama,
-                'stok_sesudah' => $stokLama - $item->qty,
-                'sumber' => 'penjualan',
-                'keterangan' => "Kirim Ulang Barang (Replacement) Return #{$returnHeader->nomor_return}",
-                'user_id' => auth()->id()
-            ]);
+                // Simpan Detail Penjualan Baru (Replacement)
+                PenjualanDetail::create([
+                    'penjualan_id' => $newPenjualan->id,
+                    'produk_id'    => $item->produk_id, // Pastikan ID produk masuk
+                    'qty'          => $item->qty,
+                    'harga'        => 0,
+                    'subtotal'     => 0,
+                ]);
+
+                // Update Stok (Barang keluar lagi)
+                StokHelper::updateStokProduk($item->produk_id, -$item->qty);
+
+                // Log Stok
+                StockLog::create([
+                    'item_id' => $item->produk_id,
+                    'item_type' => 'produk',
+                    'jenis' => 'keluar',
+                    'jumlah' => $item->qty,
+                    'stok_sebelum' => $stokLama,
+                    'stok_sesudah' => $stokLama - $item->qty,
+                    'sumber' => 'penjualan',
+                    'keterangan' => "Kirim Ulang Barang (Replacement) Return #{$returnHeader->nomor_return}",
+                    'user_id' => auth()->id()
+                ]);
+            }
+
+            $returnHeader->update(['is_resend' => 1]);
+
+            DB::commit();
+            return redirect()->route('penjualan.index')->with('success', 'Barang pengganti return berhasil diproses.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal kirim ulang: ' . $e->getMessage());
         }
-
-        $returnHeader->update(['is_resend' => 1]);
-
-        DB::commit();
-        return redirect()->route('penjualan.index')->with('success', 'Barang pengganti return berhasil diproses.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', 'Gagal kirim ulang: ' . $e->getMessage());
     }
-}
 
     public function cetakReturn(Request $request)
     {

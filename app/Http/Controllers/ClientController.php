@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Penjualan;
 use Illuminate\Http\Request;
 
 class ClientController extends Controller
@@ -45,5 +46,19 @@ class ClientController extends Controller
         $client->delete();
 
         return redirect()->back()->with('success', 'Client berhasil dihapus');
+    }
+
+    public function history($id)
+    {
+        $client = Client::findOrFail($id);
+        
+        $penjualan = Penjualan::where('client_id', $id)
+                    ->orderBy('tanggal', 'desc')
+                    ->orderBy('created_at', 'desc')
+                    ->get(); 
+
+        $title = 'Histori Transaksi - ' . $client->nama;
+        
+        return view('admin.client_history', compact('client', 'penjualan', 'title'));
     }
 }

@@ -3,9 +3,12 @@
 @section('content')
     <div class="grid grid-cols-12 gap-6 mt-5">
         <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
-            <button data-tw-toggle="modal" data-tw-target="#modal-tambah-produk" class="btn btn-primary shadow-md mr-2">Tambah Produk</button>
-            <a href="{{ route('stock-log.index', ['type' => 'produk']) }}" class="btn btn-outline-secondary mr-2">Lihat Log Produk</a>
-            <a href="javascript:;" data-tw-toggle="modal" data-tw-target="#modal-laporan-produk" class="btn btn-danger shadow-md mr-2">
+            <button data-tw-toggle="modal" data-tw-target="#modal-tambah-produk" class="btn btn-primary shadow-md mr-2">Tambah
+                Produk</button>
+            <a href="{{ route('stock-log.index', ['type' => 'produk']) }}" class="btn btn-outline-secondary mr-2">Lihat Log
+                Produk</a>
+            <a href="javascript:;" data-tw-toggle="modal" data-tw-target="#modal-laporan-produk"
+                class="btn btn-danger shadow-md mr-2">
                 <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Laporan PDF
             </a>
         </div>
@@ -34,7 +37,8 @@
                                     <div class="font-medium whitespace-nowrap">{{ $p->nama }}</div>
                                 </td>
                                 <td class="text-center">
-                                    <span class="px-2 py-1 rounded-full text-xs font-medium {{ $p->jenis == 'jadi' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning' }}">
+                                    <span
+                                        class="px-2 py-1 rounded-full text-xs font-medium {{ $p->jenis == 'jadi' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning' }}">
                                         {{ strtoupper($p->jenis) }}
                                     </span>
                                 </td>
@@ -48,17 +52,21 @@
                                     <div class="text-slate-500">{{ $p->satuan }}</div>
                                 </td>
                                 <td>
-                                    <div class="text-primary font-bold">Rp {{ number_format($p->harga_default, 0, ',', '.') }}</div>
+                                    <div class="text-primary font-bold">Rp
+                                        {{ number_format($p->harga_default, 0, ',', '.') }}</div>
                                 </td>
                                 <td class="table-report__action w-56">
                                     <div class="flex justify-center items-center">
-                                        <a class="flex items-center mr-3 text-primary" href="javascript:;" data-tw-toggle="modal" data-tw-target="#modal-edit-{{ $p->id }}">
+                                        <a class="flex items-center mr-3 text-primary" href="javascript:;"
+                                            data-tw-toggle="modal" data-tw-target="#modal-edit-{{ $p->id }}">
                                             <i data-lucide="check-square" class="w-4 h-4 mr-1"></i> Edit
                                         </a>
-                                        <a class="flex items-center mr-3 text-danger" href="javascript:;" data-tw-toggle="modal" data-tw-target="#modal-delete-{{ $p->id }}">
+                                        <a class="flex items-center mr-3 text-danger" href="javascript:;"
+                                            data-tw-toggle="modal" data-tw-target="#modal-delete-{{ $p->id }}">
                                             <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Delete
                                         </a>
-                                        <a class="flex items-center text-secondary" href="{{ route('stock-log.index', ['item_id' => $p->id, 'type' => 'produk']) }}">
+                                        <a class="flex items-center text-secondary"
+                                            href="{{ route('stock-log.index', ['item_id' => $p->id, 'type' => 'produk']) }}">
                                             <i data-lucide="list" class="w-4 h-4 mr-1"></i> Log
                                         </a>
                                     </div>
@@ -86,33 +94,41 @@
                         <div class="modal-body grid grid-cols-12 gap-4 gap-y-3">
                             <div class="col-span-12">
                                 <label class="form-label">Nama Produk</label>
-                                <input type="text" name="nama" class="form-control" value="{{ $p->nama }}" required>
+                                <input type="text" name="nama" class="form-control" value="{{ $p->nama }}"
+                                    required>
                             </div>
                             <div class="col-span-12 sm:col-span-6">
                                 <label class="form-label">Jenis Produk</label>
                                 <select name="jenis" class="form-select" required>
                                     <option value="jadi" {{ $p->jenis == 'jadi' ? 'selected' : '' }}>Barang Jadi</option>
-                                    <option value="proses" {{ $p->jenis == 'proses' ? 'selected' : '' }}>Dalam Proses</option>
+                                    <option value="proses" {{ $p->jenis == 'proses' ? 'selected' : '' }}>Dalam Proses
+                                    </option>
                                 </select>
                             </div>
                             <div class="col-span-12 sm:col-span-6">
                                 <label class="form-label">Satuan</label>
-                                <input type="text" name="satuan" class="form-control" value="{{ $p->satuan }}" required>
+                                <input type="text" name="satuan" class="form-control" value="{{ $p->satuan }}"
+                                    required>
                             </div>
                             <div class="col-span-12 sm:col-span-6">
                                 <label class="form-label">Harga Default (Rp)</label>
-                                <input type="number" name="harga_default" class="form-control" value="{{ $p->harga_default }}">
+                                <input type="number" name="harga_default" class="form-control"
+                                    value="{{ $p->harga_default }}">
                             </div>
                             <div class="col-span-12 sm:col-span-6">
                                 <label class="form-label">Stok Saat Ini</label>
-                                <input type="text" class="form-control bg-slate-100" value="{{ number_format($p->stok->jumlah ?? 0, 0, '', '') }}" readonly>
+                                <input type="text" class="form-control bg-slate-100"
+                                    value="{{ number_format($p->stok->jumlah ?? 0, 0, '', '') }}" readonly>
                             </div>
 
                             @if (auth()->user()->role == 'admin')
                                 <div class="col-span-12 border-t border-slate-200/60 mt-2 pt-3">
-                                    <label class="form-label text-primary font-bold">Koreksi Stok Manual (Admin Only)</label>
+                                    <label class="form-label text-primary font-bold">Koreksi Stok Manual (Admin
+                                        Only)</label>
                                     {{-- step="1" memastikan tidak bisa input desimal --}}
-                                    <input type="number" step="1" name="stok_manual" class="form-control border-primary" placeholder="Masukkan jumlah stok baru (Angka Utuh)">
+                                    <input type="number" step="1" name="stok_manual"
+                                        class="form-control border-primary"
+                                        placeholder="Masukkan jumlah stok baru (Angka Utuh)">
                                 </div>
                                 <div class="col-span-12">
                                     <label class="form-label">Keterangan Perubahan</label>
@@ -121,7 +137,8 @@
                             @endif
                         </div>
                         <div class="modal-footer text-right">
-                            <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-20 mr-1">Cancel</button>
+                            <button type="button" data-tw-dismiss="modal"
+                                class="btn btn-outline-secondary w-20 mr-1">Cancel</button>
                             <button type="submit" class="btn btn-primary w-20">Update</button>
                         </div>
                     </form>
@@ -141,11 +158,13 @@
                                 <i data-lucide="x-circle" class="w-16 h-16 text-danger mx-auto mt-3"></i>
                                 <div class="text-32l mt-5">Apakah Anda yakin?</div>
                                 <div class="text-slate-500 mt-2">
-                                    Apakah Anda benar-benar ingin menghapus produk <b>{{ $p->nama }}</b>? <br>Data yang sudah dihapus tidak dapat dikembalikan.
+                                    Apakah Anda benar-benar ingin menghapus produk <b>{{ $p->nama }}</b>? <br>Data
+                                    yang sudah dihapus tidak dapat dikembalikan.
                                 </div>
                             </div>
                             <div class="px-5 pb-8 text-center">
-                                <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24 mr-1">Cancel</button>
+                                <button type="button" data-tw-dismiss="modal"
+                                    class="btn btn-outline-secondary w-24 mr-1">Cancel</button>
                                 <button type="submit" class="btn btn-danger w-24">Delete</button>
                             </div>
                         </form>
@@ -167,7 +186,8 @@
                     <div class="modal-body grid grid-cols-12 gap-4 gap-y-3">
                         <div class="col-span-12">
                             <label class="form-label">Nama Produk</label>
-                            <input type="text" name="nama" class="form-control" placeholder="Nama Produk" required>
+                            <input type="text" name="nama" class="form-control" placeholder="Nama Produk"
+                                required>
                         </div>
                         <div class="col-span-12 sm:col-span-6">
                             <label class="form-label">Jenis Produk</label>
@@ -183,7 +203,8 @@
                         <div class="col-span-12 sm:col-span-6">
                             <label class="form-label">Stok Awal</label>
                             {{-- Menggunakan type="number" dan step="1" --}}
-                            <input type="number" step="1" name="stok" class="form-control" value="0" required>
+                            <input type="number" step="1" name="stok" class="form-control" value="0"
+                                required>
                         </div>
                         <div class="col-span-12 sm:col-span-6">
                             <label class="form-label">Harga Default (Rp)</label>
@@ -191,7 +212,8 @@
                         </div>
                     </div>
                     <div class="modal-footer text-right">
-                        <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-20 mr-1">Cancel</button>
+                        <button type="button" data-tw-dismiss="modal"
+                            class="btn btn-outline-secondary w-20 mr-1">Cancel</button>
                         <button type="submit" class="btn btn-primary w-20">Simpan</button>
                     </div>
                 </form>
@@ -211,22 +233,26 @@
                         <div class="col-span-12">
                             <label class="form-label">Pilih Produk</label>
                             <select name="produk_id" class="form-select" required>
-                                @foreach(\App\Models\Produk::all() as $p)
-                                    <option value="{{ $p->id }}">{{ $p->nama }} ({{ $p->jenis }})</option>
+                                @foreach (\App\Models\Produk::all() as $p)
+                                    <option value="{{ $p->id }}">{{ $p->nama }} ({{ $p->jenis }})
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-span-12">
                             <label class="form-label">Dari Tanggal</label>
-                            <input type="date" name="start_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="start_date" class="form-control"
+                                value="{{ \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') }}" required>
                         </div>
                         <div class="col-span-12">
                             <label class="form-label">Sampai Tanggal</label>
-                            <input type="date" name="end_date" class="form-control" value="{{ date('Y-m-d', strtotime('+1 month')) }}" required>
+                            <input type="date" name="end_date" class="form-control"
+                                value="{{ \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') }}" required>
                         </div>
                     </div>
                     <div class="modal-footer text-right">
-                        <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-20 mr-1">Batal</button>
+                        <button type="button" data-tw-dismiss="modal"
+                            class="btn btn-outline-secondary w-20 mr-1">Batal</button>
                         <button type="submit" class="btn btn-primary w-32">
                             <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak PDF
                         </button>

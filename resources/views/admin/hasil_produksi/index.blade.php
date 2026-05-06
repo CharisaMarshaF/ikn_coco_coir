@@ -57,36 +57,6 @@
             </div>
         </div>
     </div>
-
-    {{-- Modal Section --}}
-    @foreach ($hasilProduksi as $h)
-        {{-- Modal Delete (Desain disamakan persis dengan Bahan Baku) --}}
-        <div id="modal-delete-{{ $h->id }}" class="modal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-body p-0">
-                        <form action="{{ route('hasil-produksi.destroy', $h->id) }}" method="POST">
-                            @csrf
-                            @method('DELETE')
-                            <div class="p-5 text-center">
-                                <i data-lucide="x-circle" class="w-16 h-16 text-danger mx-auto mt-3"></i>
-                                <div class="text-3xl mt-5">Apakah Anda yakin?</div>
-                                <div class="text-slate-500 mt-2">
-                                    Data produksi <b>#{{ $h->kode_produksi }}</b> akan dibatalkan.<br>
-                                    <span class="text-danger font-medium text-xs">Stok produk akan dikurangi kembali secara
-                                        otomatis!</span>
-                                </div>
-                            </div>
-                            <div class="px-5 pb-8 text-center">
-                                <button type="button" data-tw-dismiss="modal"
-                                    class="btn btn-outline-secondary w-24 mr-1">Cancel</button>
-                                <button type="submit" class="btn btn-danger w-24">Batalkan</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
         {{-- Modal Laporan PDF --}}
         <div id="modal-laporan-hasil-produksi" class="modal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
@@ -120,6 +90,36 @@
                 </div>
             </div>
         </div>
+    {{-- Modal Section --}}
+    @foreach ($hasilProduksi as $h)
+        {{-- Modal Delete (Desain disamakan persis dengan Bahan Baku) --}}
+        <div id="modal-delete-{{ $h->id }}" class="modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body p-0">
+                        <form action="{{ route('hasil-produksi.destroy', $h->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <div class="p-5 text-center">
+                                <i data-lucide="x-circle" class="w-16 h-16 text-danger mx-auto mt-3"></i>
+                                <div class="text-3xl mt-5">Apakah Anda yakin?</div>
+                                <div class="text-slate-500 mt-2">
+                                    Data produksi <b>#{{ $h->kode_produksi }}</b> akan dibatalkan.<br>
+                                    <span class="text-danger font-medium text-xs">Stok produk akan dikurangi kembali secara
+                                        otomatis!</span>
+                                </div>
+                            </div>
+                            <div class="px-5 pb-8 text-center">
+                                <button type="button" data-tw-dismiss="modal"
+                                    class="btn btn-outline-secondary w-24 mr-1">Cancel</button>
+                                <button type="submit" class="btn btn-danger w-24">Batalkan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     @endforeach
 
     <!-- Script untuk Notifikasi Sukses (Tetap pakai SweetAlert agar elegan saat berhasil) -->
