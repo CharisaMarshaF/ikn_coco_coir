@@ -12,12 +12,11 @@ class KasHarianController extends Controller
 {
     public function index(Request $request)
     {
-         $tgl_mulai = $request->get('tgl_mulai', \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'));
-    
-    // Mengatur default: Tanggal terakhir bulan ini (bukan hari ini saja)
-    $tgl_selesai = $request->get('tgl_selesai', \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $tgl_mulai = $request->get('tgl_mulai', \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $tgl_selesai = $request->get('tgl_selesai', \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d'));
 
-        $kas = KasHarian::with(['rekening' => function ($q) {
+        // Tambahkan 'details' di sini agar tidak null
+        $kas = KasHarian::with(['details', 'rekening' => function ($q) {
             $q->withTrashed();
         }])
             ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai])
@@ -25,16 +24,15 @@ class KasHarianController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
 
-        // 2. Hanya tampilkan rekening yang AKTIF untuk pilihan di Form Input
+        // Sisa kode controller lainnya tetap sama...
         $rekenings = Rekening::all();
-
-        // Logika Kotak Besar (Per Bulan ini)
         $bulanSekarang = date('m');
         $tahunSekarang = date('Y');
 
         $totalMasukBulanIni = KasHarian::whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->where('jenis', 'masuk')->sum('total_nominal');
+            
         $totalKeluarBulanIni = KasHarian::whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->where('jenis', 'keluar')->sum('total_nominal');
@@ -42,13 +40,8 @@ class KasHarianController extends Controller
         $title = 'Laporan Kas Harian';
 
         return view('admin.keuangan.kas', compact(
-            'kas',
-            'tgl_mulai',
-            'tgl_selesai',
-            'totalMasukBulanIni',
-            'totalKeluarBulanIni',
-            'rekenings',
-            'title'
+            'kas', 'tgl_mulai', 'tgl_selesai', 'totalMasukBulanIni', 
+            'totalKeluarBulanIni', 'rekenings', 'title'
         ));
     }
 
@@ -142,55 +135,57 @@ class KasHarianController extends Controller
         }
     }
 
-public function exportPdf(Request $request)
-{
-    $tgl_mulai = $request->get('tgl_mulai', \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'));
-    $tgl_selesai = $request->get('tgl_selesai', \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d'));
-    $rekening_id = $request->get('rekening_id'); // Ambil filter rekening
+    public function exportPdf(Request $request)
+    {
+        $tgl_mulai = $request->get('tgl_mulai', \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $tgl_selesai = $request->get('tgl_selesai', \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $rekening_id = $request->get('rekening_id'); // Ambil filter rekening
 
-    // 1. Hitung Saldo Awal Berdasarkan Filter
-    $querySaldoSekarang = Rekening::query();
-    $queryMasuk = KasHarian::where('tanggal', '>=', $tgl_mulai)->where('jenis', 'masuk');
-    $queryKeluar = KasHarian::where('tanggal', '>=', $tgl_mulai)->where('jenis', 'keluar');
+        // 1. Hitung Saldo Awal Berdasarkan Filter
+        $querySaldoSekarang = Rekening::query();
+        $queryMasuk = KasHarian::where('tanggal', '>=', $tgl_mulai)->where('jenis', 'masuk');
+        $queryKeluar = KasHarian::where('tanggal', '>=', $tgl_mulai)->where('jenis', 'keluar');
 
-    if ($rekening_id) {
-        $querySaldoSekarang->where('id', $rekening_id);
-        $queryMasuk->where('rekening_id', $rekening_id);
-        $queryKeluar->where('rekening_id', $rekening_id);
+        if ($rekening_id) {
+            $querySaldoSekarang->where('id', $rekening_id);
+            $queryMasuk->where('rekening_id', $rekening_id);
+            $queryKeluar->where('rekening_id', $rekening_id);
+        }
+
+        $totalSaldoSekarang = $querySaldoSekarang->sum('saldo');
+        $totalMasukSejakMulai = $queryMasuk->sum('total_nominal');
+        $totalKeluarSejakMulai = $queryKeluar->sum('total_nominal');
+
+        $saldoAwalRiil = $totalSaldoSekarang - $totalMasukSejakMulai + $totalKeluarSejakMulai;
+
+        // 2. Ambil data mutasi dengan filter rekening
+        $queryData = KasHarian::with([
+            'rekening' => function ($q) {
+                $q->withTrashed();
+            },
+            'details'
+        ])
+            ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai]);
+
+        if ($rekening_id) {
+            $queryData->where('rekening_id', $rekening_id);
+        }
+
+        $data = $queryData->orderBy('tanggal', 'asc')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // Ambil info nama rekening untuk judul PDF jika ada filter
+        $namaRekening = $rekening_id ? Rekening::withTrashed()->find($rekening_id)->nama : 'Semua Rekening';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.keuangan.export_pdf', [
+            'data' => $data,
+            'tgl_mulai' => $tgl_mulai,
+            'tgl_selesai' => $tgl_selesai,
+            'saldoAwal' => $saldoAwalRiil,
+            'namaRekening' => $namaRekening, // Opsional: tampilkan di PDF
+        ])->setPaper('a4', 'potrait');
+
+        return $pdf->stream('Laporan_Kas_' . $namaRekening . '.pdf');
     }
-
-    $totalSaldoSekarang = $querySaldoSekarang->sum('saldo');
-    $totalMasukSejakMulai = $queryMasuk->sum('total_nominal');
-    $totalKeluarSejakMulai = $queryKeluar->sum('total_nominal');
-    
-    $saldoAwalRiil = $totalSaldoSekarang - $totalMasukSejakMulai + $totalKeluarSejakMulai;
-
-    // 2. Ambil data mutasi dengan filter rekening
-    $queryData = KasHarian::with([
-        'rekening' => function ($q) { $q->withTrashed(); },
-        'details'
-    ])
-    ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai]);
-
-    if ($rekening_id) {
-        $queryData->where('rekening_id', $rekening_id);
-    }
-
-    $data = $queryData->orderBy('tanggal', 'asc')
-                      ->orderBy('created_at', 'asc')
-                      ->get();
-
-    // Ambil info nama rekening untuk judul PDF jika ada filter
-    $namaRekening = $rekening_id ? Rekening::withTrashed()->find($rekening_id)->nama : 'Semua Rekening';
-
-    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.keuangan.export_pdf', [
-        'data' => $data,
-        'tgl_mulai' => $tgl_mulai,
-        'tgl_selesai' => $tgl_selesai,
-        'saldoAwal' => $saldoAwalRiil,
-        'namaRekening' => $namaRekening, // Opsional: tampilkan di PDF
-    ])->setPaper('a4', 'potrait');
-
-    return $pdf->stream('Laporan_Kas_'.$namaRekening.'.pdf');
-}
 }

@@ -26,6 +26,7 @@
         </div>
     @endif
 
+    {{-- Report Boxes --}}
     <div class="grid grid-cols-12 gap-6 mt-5">
         <div class="col-span-12 sm:col-span-6 xl:col-span-6 intro-y">
             <div class="report-box zoom-in">
@@ -49,93 +50,47 @@
         </div>
     </div>
 
+    {{-- Filter Form --}}
     <div class="grid grid-cols-12 gap-6 mt-5">
         <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
-<form action="{{ route('kas.index') }}" method="GET" id="filterForm" class="flex flex-wrap items-center gap-3">
-    <div class="flex items-center gap-2">
-    <label class="whitespace-nowrap">Rekening:</label>
-    <select name="rekening_id" id="rekening_select_filter" class="form-control box" onchange="updatePdfLink()">
-    <option value="" selected disabled>-- Pilih Rekening --</option>
-    @foreach ($rekenings as $rek)
-        <option value="{{ $rek->id }}" {{ request('rekening_id') == $rek->id ? 'selected' : '' }}>
-            {{ $rek->nama }}
-        </option>
-    @endforeach
-</select>
-</div>
-    <div class="flex items-center gap-2">
-        <label class="whitespace-nowrap">Dari:</label>
-        <input type="date" name="tgl_mulai" id="filter_tgl_mulai" class="form-control box"
-            value="{{ $tgl_mulai }}" onchange="updatePdfLink()">
-    </div>
-    <div class="flex items-center gap-2">
-        <label class="whitespace-nowrap">Sampai:</label>
-        <input type="date" name="tgl_selesai" id="filter_tgl_selesai" class="form-control box"
-            value="{{ $tgl_selesai }}" onchange="updatePdfLink()">
-    </div>
-    
-    <button type="submit" class="btn btn-secondary shadow-md">Filter Tabel</button>
-
-    <!-- Bagian Button Export PDF yang diubah -->
-<!-- Tambahkan target="_blank" -->
-<a id="btnExportPdf" href="javascript:void(0)" 
-   target="_blank"
-   onclick="return validateAndExport(this)"
-   class="btn btn-outline-danger shadow-md ml-2 opacity-50 cursor-not-allowed" 
-   data-enabled="false">
-    <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Export PDF
-</a>
-</form>
-
-<script>
-function updatePdfLink() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const rekeningId = formData.get('rekening_id');
-    const btnPdf = document.getElementById('btnExportPdf');
-    
-    if (rekeningId && rekeningId !== "") {
-        // Aktifkan tombol secara visual
-        btnPdf.classList.remove('opacity-50', 'cursor-not-allowed');
-        btnPdf.dataset.enabled = "true";
-        
-        // Buat query string dari semua input form (tgl_mulai, tgl_selesai, rekening_id)
-        const params = new URLSearchParams(formData).toString();
-        const baseUrl = "{{ route('kas.pdf') }}";
-        
-        // Update href dengan parameter lengkap
-        btnPdf.href = baseUrl + "?" + params;
-    } else {
-        // Matikan tombol jika rekening belum dipilih
-        btnPdf.classList.add('opacity-50', 'cursor-not-allowed');
-        btnPdf.dataset.enabled = "false";
-        btnPdf.href = "javascript:void(0)";
-    }
-}
-
-function validateAndExport(el) {
-    // Jika data-enabled adalah false, cegah pembukaan tab baru
-    if (el.dataset.enabled === "false") {
-        alert("Silakan pilih rekening terlebih dahulu sebelum mengekspor laporan.");
-        return false; // Membatalkan aksi href dan target="_blank"
-    }
-    // Jika true, biarkan browser menjalankan target="_blank" secara alami
-    return true;
-}
-
-// Jalankan saat halaman pertama kali dimuat untuk mengecek status awal
-document.addEventListener("DOMContentLoaded", function() {
-    updatePdfLink();
-});
-</script>
+            <form action="{{ route('kas.index') }}" method="GET" id="filterForm"
+                class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <label class="whitespace-nowrap">Rekening:</label>
+                    <select name="rekening_id" id="rekening_select_filter" class="form-control box"
+                        onchange="updatePdfLink()">
+                        <option value="" selected disabled>-- Pilih Rekening --</option>
+                        @foreach ($rekenings as $rek)
+                            <option value="{{ $rek->id }}" {{ request('rekening_id') == $rek->id ? 'selected' : '' }}>
+                                {{ $rek->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="whitespace-nowrap">Dari:</label>
+                    <input type="date" name="tgl_mulai" id="filter_tgl_mulai" class="form-control box"
+                        value="{{ $tgl_mulai }}" onchange="updatePdfLink()">
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="whitespace-nowrap">Sampai:</label>
+                    <input type="date" name="tgl_selesai" id="filter_tgl_selesai" class="form-control box"
+                        value="{{ $tgl_selesai }}" onchange="updatePdfLink()">
+                </div>
+                <button type="submit" class="btn btn-secondary shadow-md">Filter Tabel</button>
+                <a id="btnExportPdf" href="javascript:void(0)" target="_blank" onclick="return validateAndExport(this)"
+                    class="btn btn-outline-danger shadow-md ml-2 opacity-50 cursor-not-allowed" data-enabled="false">
+                    <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Export PDF
+                </a>
+            </form>
         </div>
 
+        {{-- Table --}}
         <div class="intro-y col-span-12 p-5 bg-white rounded-lg shadow mt-5">
             <div class="overflow-x-auto">
                 <table id="example1" class="table table-report table-report--bordered display w-full">
                     <thead>
                         <tr>
-                            <th class="whitespace-nowrap w-10">NO</th>
+                            <th class="whitespace-nowrap w-10 text-center">NO</th>
                             <th class="whitespace-nowrap">WAKTU</th>
                             <th class="whitespace-nowrap">REKENING</th>
                             <th class="whitespace-nowrap">KETERANGAN</th>
@@ -153,15 +108,20 @@ document.addEventListener("DOMContentLoaded", function() {
                                     <div class="font-medium whitespace-nowrap">{{ $k->rekening->nama ?? 'N/A' }}</div>
                                 </td>
                                 <td>
-                                    <span class="text-slate-500 text-xs block">[{{ strtoupper($k->kategori) }}]</span>
-                                    <div class="font-medium">{{ $k->keterangan ?? '-' }}</div>
+                                    <div class="flex items-center">
+                                        <div>
+                                            <span
+                                                class="text-slate-500 text-xs block">[{{ strtoupper($k->kategori) }}]</span>
+                                            <div class="font-medium">{{ $k->keterangan ?? '-' }}</div>
+                                        </div>
+
+                                    </div>
                                 </td>
                                 <td class="text-center">
-                                    @if ($k->jenis == 'masuk')
-                                        <span class="text-success font-medium uppercase italic">Uang Masuk</span>
-                                    @else
-                                        <span class="text-danger font-medium uppercase italic">Uang Keluar</span>
-                                    @endif
+                                    <span
+                                        class="{{ $k->jenis == 'masuk' ? 'text-success' : 'text-danger' }} font-medium uppercase italic">
+                                        Uang {{ $k->jenis }}
+                                    </span>
                                 </td>
                                 <td
                                     class="text-right font-bold {{ $k->jenis == 'masuk' ? 'text-success' : 'text-danger' }}">
@@ -169,47 +129,32 @@ document.addEventListener("DOMContentLoaded", function() {
                                     {{ number_format($k->total_nominal, 0, ',', '.') }}
                                 </td>
                                 <td class="table-report__action w-56">
-                                    <div class="flex justify- items-center">
-                                        <a class="flex items-center text-danger" href="javascript:;" data-tw-toggle="modal"
+                                    <!-- Menggunakan justify-center agar posisi tombol selalu di tengah cell -->
+                                    <div class="flex justify-left items-center gap-3">
+
+                                        <!-- Tombol Batalkan -->
+                                        <a class="flex items-center text-danger hover:text-opacity-80 transition"
+                                            href="javascript:;" data-tw-toggle="modal"
                                             data-tw-target="#delete-confirmation-modal-{{ $k->id }}">
                                             <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Batalkan
                                         </a>
-                                    </div>
 
-                                    <div id="delete-confirmation-modal-{{ $k->id }}" class="modal" tabindex="-1"
-                                        aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-body p-0">
-                                                    <form action="{{ route('kas.destroy', $k->id) }}" method="POST">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <div class="p-5 text-center">
-                                                            <i data-lucide="x-circle"
-                                                                class="w-16 h-16 text-danger mx-auto mt-3"></i>
-                                                            <div class="text-3xl mt-5">Batalkan Data Kas?</div>
-                                                            <div class="text-slate-500 mt-2">
-                                                                Apakah Anda yakin ingin membatalkan data kas sebesar
-                                                                <b class="text-danger">Rp
-                                                                    {{ number_format($k->total_nominal, 0, ',', '.') }}</b>?
-                                                                <br>Saldo pada rekening <b>{{ $k->rekening->nama }}</b>
-                                                                akan dikembalikan secara otomatis.
-                                                            </div>
-                                                        </div>
-                                                        <div class="px-5 pb-8 text-center">
-                                                            <button type="button" data-tw-dismiss="modal"
-                                                                class="btn btn-outline-secondary w-24 mr-1">Batal</button>
-                                                            <button type="submit"
-                                                                class="btn btn-danger w-24">Batalkan</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <!-- Tombol Detail (Hanya muncul jika kondisi terpenuhi) -->
+                                        @if ($k->kategori == 'operasional' && $k->details && $k->details->count() > 0)
+                                            <button data-tw-toggle="modal"
+                                                data-tw-target="#modal-detail-{{ $k->id }}"
+                                                class="btn btn-sm btn-outline-info flex items-center px-2 py-1 shadow-sm">
+                                                <i data-lucide="list" class="w-4 h-4 mr-1"></i> Detail
+                                            </button>
+                                        @endif
+
                                     </div>
                                 </td>
                             </tr>
                         @empty
+                            <tr>
+                                <td colspan="7" class="text-center p-10 text-slate-500">Tidak ada data ditemukan.</td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -217,7 +162,85 @@ document.addEventListener("DOMContentLoaded", function() {
         </div>
     </div>
 
-    {{-- Modal Tambah Kas --}}
+    {{-- MODAL SECTION - Diletakkan di luar table loop agar tidak rusak strukturnya --}}
+    @foreach ($kas as $k)
+        {{-- Modal Detail --}}
+        @if ($k->kategori == 'operasional' && $k->details)
+            <div id="modal-detail-{{ $k->id }}" class="modal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="font-medium text-base mr-auto">Detail Item Operasional</h2>
+                            <button data-tw-dismiss="modal"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-bordered table-sm w-full">
+                                <thead class="bg-slate-100 text-slate-600">
+                                    <tr>
+                                        <th class="whitespace-nowrap">Nama Item</th>
+                                        <th class="whitespace-nowrap text-center">Qty</th>
+                                        <th class="whitespace-nowrap text-right">Harga</th>
+                                        <th class="whitespace-nowrap text-right">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($k->details as $item)
+                                        <tr>
+                                            <td class="bg-white text-slate-600">{{ $item->nama_item }}</td>
+                                            <td class="bg-white text-center text-slate-600">
+                                                {{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                                            <td class="bg-white text-right text-slate-600">Rp
+                                                {{ number_format($item->harga, 0, ',', '.') }}</td>
+                                            <td class="bg-white text-right text-slate-600">Rp
+                                                {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot>
+                                    <tr class="font-bold bg-slate-50 text-slate-700">
+                                        <td colspan="3" class="text-right">TOTAL</td>
+                                        <td class="text-right text-primary">Rp
+                                            {{ number_format($k->total_nominal, 0, ',', '.') }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- Modal Delete --}}
+        <div id="delete-confirmation-modal-{{ $k->id }}" class="modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body p-0">
+                        <form action="{{ route('kas.destroy', $k->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <div class="p-5 text-center">
+                                <i data-lucide="x-circle" class="w-16 h-16 text-danger mx-auto mt-3"></i>
+                                <div class="text-3xl mt-5">Batalkan Data Kas?</div>
+                                <div class="text-slate-500 mt-2">
+                                    Apakah Anda yakin ingin membatalkan data kas sebesar <b class="text-danger">Rp
+                                        {{ number_format($k->total_nominal, 0, ',', '.') }}</b>?
+                                    <br>Saldo pada rekening <b>{{ $k->rekening->nama ?? 'N/A' }}</b> akan dikembalikan
+                                    secara otomatis.
+                                </div>
+                            </div>
+                            <div class="px-5 pb-8 text-center">
+                                <button type="button" data-tw-dismiss="modal"
+                                    class="btn btn-outline-secondary w-24 mr-1">Batal</button>
+                                <button type="submit" class="btn btn-danger w-24">Batalkan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endforeach
+
+    {{-- Modal Tambah Kas Manual --}}
     <div id="modal-tambah-kas" class="modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -253,12 +276,11 @@ document.addEventListener("DOMContentLoaded", function() {
                             <label class="form-label">Kategori</label>
                             <select name="kategori" id="kategori_select" class="form-select"
                                 onchange="toggleKategori(this.value)" required>
-                                <option value="modal">Modal/Flat</option>
-                                <option value="operasional">Operasional (Detail Item)</option>
+                                <option value="modal">Langsung</option>
+                                <option value="operasional">Rincian/Item</option>
                             </select>
                         </div>
 
-                        {{-- Input Modal/Flat --}}
                         <div class="col-span-12" id="input-modal-container">
                             <label class="form-label">Nominal Total</label>
                             <input type="text" id="nominal_mask" class="form-control rupiah-input"
@@ -266,7 +288,6 @@ document.addEventListener("DOMContentLoaded", function() {
                             <input type="hidden" name="nominal" id="nominal_actual">
                         </div>
 
-                        {{-- Input Operasional --}}
                         <div class="col-span-12 hidden" id="input-operasional-container">
                             <label class="form-label font-bold mb-2">Detail Item</label>
                             <div id="item-list">
@@ -289,8 +310,6 @@ document.addEventListener("DOMContentLoaded", function() {
                             </div>
                             <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addRow()">+
                                 Tambah Item</button>
-
-                            <!-- Preview Subtotal -->
                             <div class="mt-4 p-3 bg-slate-100 rounded-lg flex justify-between items-center">
                                 <span class="font-semibold">Total Keseluruhan: </span>
                                 <span class="text-lg font-bold text-primary" id="preview-total-operasional">Rp 0</span>
@@ -315,7 +334,6 @@ document.addEventListener("DOMContentLoaded", function() {
     <script>
         let rowIdx = 1;
 
-        // Fungsi Format Rupiah Real-time
         document.addEventListener('input', function(e) {
             if (e.target.classList.contains('rupiah-input')) {
                 let value = e.target.value.replace(/[^,\d]/g, '');
@@ -330,14 +348,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
 
                 e.target.value = rupiah;
-
-                // Simpan nilai asli tanpa titik ke input hidden terkait
                 let container = e.target.closest('div');
                 let actualInput = container.querySelector('input[type="hidden"]');
                 if (actualInput) {
                     actualInput.value = value;
                 }
-
                 calculateTotal();
             }
         });
@@ -378,14 +393,43 @@ document.addEventListener("DOMContentLoaded", function() {
         function calculateTotal() {
             let grandTotal = 0;
             const rows = document.querySelectorAll('.item-row');
-
             rows.forEach(row => {
                 const qty = parseFloat(row.querySelector('.qty-input').value) || 0;
                 const price = parseFloat(row.querySelector('.actual-price').value) || 0;
                 grandTotal += (qty * price);
             });
-
-            document.getElementById('preview-total-operasional').innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
+            const preview = document.getElementById('preview-total-operasional');
+            if (preview) preview.innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
         }
+
+        function updatePdfLink() {
+            const form = document.getElementById('filterForm');
+            const formData = new FormData(form);
+            const rekeningId = formData.get('rekening_id');
+            const btnPdf = document.getElementById('btnExportPdf');
+
+            if (rekeningId && rekeningId !== "") {
+                btnPdf.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnPdf.dataset.enabled = "true";
+                const params = new URLSearchParams(formData).toString();
+                btnPdf.href = "{{ route('kas.pdf') }}?" + params;
+            } else {
+                btnPdf.classList.add('opacity-50', 'cursor-not-allowed');
+                btnPdf.dataset.enabled = "false";
+                btnPdf.href = "javascript:void(0)";
+            }
+        }
+
+        function validateAndExport(el) {
+            if (el.dataset.enabled === "false") {
+                alert("Silakan pilih rekening terlebih dahulu sebelum mengekspor laporan.");
+                return false;
+            }
+            return true;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            updatePdfLink();
+        });
     </script>
 @endsection

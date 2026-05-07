@@ -17,15 +17,6 @@
             line-height: 1.1;
         }
 
-        #watermark {
-            position: fixed;
-            top: 20%;
-            left: 25%;
-            width: 250px;
-            opacity: 0.06;
-            z-index: -1000;
-        }
-
         .header-table { width: 100%; border-bottom: 2px double #000; margin-bottom: 8px; padding-bottom: 5px; }
         .logo-top { width: 50px; height: auto; }
         .company-name { font-size: 12pt; font-weight: bold; text-transform: uppercase; margin: 0; }
@@ -44,7 +35,6 @@
             border-top: 1px solid #000;
             border-bottom: 1px solid #000;
             padding: 4px; 
-            text-align: left;
             font-size: 8pt;
         }
         .main-table td { padding: 4px; font-size: 8pt; vertical-align: top; border-bottom: 1px dotted #ccc; }
@@ -56,13 +46,13 @@
         
         .text-right { text-align: right; }
         .text-center { text-align: center; }
+        .text-left { text-align: left; }
         .bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
     </style>
 </head>
 <body>
     
-
     <table class="header-table">
         <tr>
             <td width="10%">
@@ -71,10 +61,11 @@
                 @endif
             </td>
             <td width="50%">
-                <h1 class="company-name">{{ $konfigurasi->nama_perusahaan ?? 'NAMA PERUSAHAAN' }}</h1>
+                <h1 class="company-name">{{ $konfigurasi->nama_cv ?? 'NAMA PERUSAHAAN' }}</h1>
                 <div class="company-info">
                     {{ $konfigurasi->alamat ?? '-' }}<br>
-                    Telp: {{ $konfigurasi->telepon ?? '-' }}
+                    Telp: {{ $konfigurasi->telepon ?? '-' }} {{ $konfigurasi->email ? ' | Email: ' . $konfigurasi->email : '' }}<br>
+                    {{ $konfigurasi->website }}
                 </div>
             </td>
             <td class="document-title">
@@ -128,7 +119,7 @@
         <thead>
             <tr>
                 <th width="5%" class="text-center">NO</th>
-                <th width="45%">NAMA BAHAN</th>
+                <th width="45%" class="text-left">NAMA BAHAN</th>
                 <th width="15%" class="text-center">QTY</th>
                 <th width="15%" class="text-right">HARGA</th>
                 <th width="20%" class="text-right">SUBTOTAL</th>
@@ -137,14 +128,13 @@
         <tbody>
             @foreach($pembelian->detail as $index => $item)
             <tr>
-                <td width="5%" class="text-center">{{ $index + 1 }}</td>
-                <td width="45%" class="uppercase">
-                    {{ $item->bahan->nama }}<br>
-                    <small style="font-size: 7pt;">Satuan: {{ $item->bahan->satuan }}</small>
+                <td class="text-center">{{ $index + 1 }}</td>
+                <td class="text-left uppercase">
+                    {{ $item->bahan->nama }}
                 </td>
-                <td width="15%" class="text-">{{ $item->qty + 0 }}</td>
-                <td width="15%" class="text-">{{ number_format($item->harga, 0, ',', '.') }}</td>
-                <td width="20%" class="text-">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                <td class="text-center">{{ $item->qty + 0 }} {{ $item->bahan->satuan }}</td>
+                <td class="text-right">{{ number_format($item->harga, 0, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -154,7 +144,9 @@
         <table class="summary-table">
             <tr>
                 <td class="bold text-right">TOTAL PEMBELIAN:</td>
-                <td class="bold text- border-total" style="width: 50%;">Rp {{ number_format($pembelian->total, 0, ',', '.') }}</td>
+                <td class="bold text-right border-total" style="width: 50%;">
+                    Rp {{ number_format($pembelian->total, 0, ',', '.') }}
+                </td>
             </tr>
         </table>
     </div>
@@ -170,7 +162,7 @@
 
     <div style="margin-top: 20px; font-size: 7pt; font-style: italic; border-top: 1px solid #eee; padding-top: 5px;">
         * Dokumen ini merupakan bukti sah pembelian bahan baku.<br>
-        * Dicetak secara otomatis oleh sistem pada {{ date('d/m/Y H:i') }}.
+        * Dicetak secara otomatis oleh sistem pada {{ date('d/m/Y') }}.
     </div>
 </body>
 </html>

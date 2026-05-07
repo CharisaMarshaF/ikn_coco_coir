@@ -36,7 +36,7 @@
     <thead>
         <tr>
             <th width="4%">No</th>
-            <th width="18%">Tanggal</th> <!-- Lebar sedikit ditambah agar tanggal tidak terpotong -->
+            <th width="18%">Tanggal</th>
             <th width="20%">Kode</th>
             <th width="28%">Produk</th>
             <th width="16%">Pola</th>
@@ -53,12 +53,12 @@
             @foreach($row->details as $index => $det)
             <tr class="{{ $rowClass }}">
                 @if($index === 0)
-                    <td rowspan="{{ $rowCount }}" class="text-center font-bold">{{ $no++ }}</td>
-                    <td rowspan="{{ $rowCount }}" class="text-center">
-                        {{-- Perubahan format tanggal di sini --}}
+                    {{-- Style ditambahkan vertical-align: top --}}
+                    <td rowspan="{{ $rowCount }}" class="text-center font-bold" style="vertical-align: top;">{{ $no++ }}</td>
+                    <td rowspan="{{ $rowCount }}" class="text-center" style="vertical-align: top;">
                         {{ \Carbon\Carbon::parse($row->tanggal)->translatedFormat('j F Y') }}
                     </td>
-                    <td rowspan="{{ $rowCount }}" class="text-center font-bold">
+                    <td rowspan="{{ $rowCount }}" class="text-center font-bold" style="vertical-align: top;">
                          #{{ $row->kode_produksi }}
                     </td>
                 @endif
@@ -67,10 +67,11 @@
                     {{ $det->produk ? ($det->produk->trashed() ? $det->produk->nama . ' (Dihapus)' : $det->produk->nama) : 'N/A' }}
                 </td>
                 <td class="text-center">
-                    @if(strtolower($det->produk->jenis ?? '') == 'jadi')
+                    {{-- Logika Label Pola --}}
+                    @if(strtolower($det->produk->jenis ?? '') == 'jadi' || $det->kategori_pola === 'Jadi')
                         Produk Jadi
                     @else
-                        {{ $det->kategori_pola === 'Jadi' ? '' : str_replace('_', ' ', $det->kategori_pola) }}
+                        {{ str_replace('_', ' ', $det->kategori_pola) }}
                     @endif
                 </td>
                 <td class="text-right">
@@ -98,15 +99,24 @@
                 </tr>
             </thead>
             <tbody>
-                @php $i = 0; @endphp
-                @foreach($summary as $item)
+                @php 
+                    // Logika Pengurutan Akumulasi: Bulat, Setengah Jadi, Jadi
+                    $sortedSummary = collect($summary)->sortBy(function($item) {
+                        $pola = $item['pola'];
+                        if ($pola == 'Bulat') return 1;
+                        if ($pola == 'Setengah_jadi') return 2;
+                        return 3; // Untuk 'Jadi'
+                    });
+                    $i = 0; 
+                @endphp
+                @foreach($sortedSummary as $item)
                 <tr class="{{ $i % 2 != 0 ? 'bg-light' : '' }}">
                     <td>{{ $item['nama'] }}</td>
                     <td class="text-center">
-                        @if(strtolower($item['jenis'] ?? '') == 'jadi')
+                        @if(strtolower($item['jenis'] ?? '') == 'jadi' || $item['pola'] === 'Jadi')
                             Produk Jadi
                         @else
-                            {{ $item['pola'] === 'Jadi' ? '' : str_replace('_', ' ', $item['pola']) }}
+                            {{ str_replace('_', ' ', $item['pola']) }}
                         @endif
                     </td>
                     <td class="text-right">

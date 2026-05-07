@@ -119,53 +119,53 @@
             <th width="15%">Total Nilai</th>
         </tr>
     </thead>
-    <tbody>
-        @forelse($pembelian as $key => $row)
-            @php 
-                $rowCount = $row->detail->count(); 
-                $rowClass = ($key % 2 == 0) ? '' : 'bg-light';
-            @endphp
-            @foreach($row->detail as $index => $item)
-            <tr class="{{ $rowClass }}">
-                {{-- Kolom yang di-rowspan (Hanya muncul di baris pertama detail) --}}
-                @if($index === 0)
-                    <td rowspan="{{ $rowCount }}" class="text-center font-bold" style="vertical-align: middle;">
-                        {{ $key + 1 }}
-                    </td>
-                    <td rowspan="{{ $rowCount }}" class="text-center" style="vertical-align: middle;">
-                        {{ \Carbon\Carbon::parse($row->tanggal)->translatedFormat('j F Y') }}
-                    </td>
-                    <td rowspan="{{ $rowCount }}" class="text-center font-bold" style="color: #2c3e50; vertical-align: middle;">
-                        #PB-{{ str_pad($row->id, 5, '0', STR_PAD_LEFT) }}
-                    </td>
-                @endif
+<tbody>
+    @forelse($pembelian as $key => $row)
+        @php 
+            $rowCount = $row->detail->count(); 
+            $rowClass = ($key % 2 == 0) ? '' : 'bg-light';
+        @endphp
+        @foreach($row->detail as $index => $item)
+        <tr class="{{ $rowClass }}">
+            {{-- Kolom yang di-rowspan: SEKARANG MENGGUNAKAN vertical-align: top --}}
+            @if($index === 0)
+                <td rowspan="{{ $rowCount }}" class="text-center font-bold" style="vertical-align: top; padding-top: 8px;">
+                    {{ $key + 1 }}
+                </td>
+                <td rowspan="{{ $rowCount }}" class="text-center" style="vertical-align: top; padding-top: 8px;">
+                    {{ \Carbon\Carbon::parse($row->tanggal)->translatedFormat('j F Y') }}
+                </td>
+                <td rowspan="{{ $rowCount }}" class="text-center font-bold" style="color: #2c3e50; vertical-align: top; padding-top: 8px;">
+                    #PB-{{ str_pad($row->id, 5, '0', STR_PAD_LEFT) }}
+                </td>
+            @endif
 
-                {{-- Kolom Detail Produk --}}
-                <td>{{ $item->bahan->nama ?? 'Bahan Tidak Ditemukan' }}</td>
-                <td class="text-right">
-                    <span class="font-bold">{{ number_format($item->qty, 2, ',', '.') }}</span>
-                    <span class="unit-text">{{ $item->bahan->satuan ?? '' }}</span>
-                </td>
-                <td class="text-right">
-                     {{ number_format($item->harga, 0, ',', '.') }}
-                </td>
+            {{-- Kolom Detail Produk --}}
+            <td>{{ $item->bahan->nama ?? 'Bahan Tidak Ditemukan' }}</td>
+            <td class="text-right">
+                <span class="font-bold">{{ number_format($item->qty, 2, ',', '.') }}</span>
+                <span class="unit-text">{{ $item->bahan->satuan ?? '' }}</span>
+            </td>
+            <td class="text-right">
+                 {{ number_format($item->harga, 0, ',', '.') }}
+            </td>
 
-                {{-- Kolom Total per Invoice (Hanya muncul di baris pertama detail) --}}
-                @if($index === 0)
-                    <td rowspan="{{ $rowCount }}" class="text-right font-bold" style="vertical-align: middle; background-color: #fcfcfc;">
-                         {{ number_format($row->total, 0, ',', '.') }}
-                    </td>
-                @endif
-            </tr>
-            @endforeach
-        @empty
-            <tr>
-                <td colspan="7" class="text-center" style="padding: 30px; color: #7f8c8d;">
-                    <i>Tidak ada data transaksi pada periode ini.</i>
+            {{-- Kolom Total per Invoice: SEKARANG MENGGUNAKAN vertical-align: top --}}
+            @if($index === 0)
+                <td rowspan="{{ $rowCount }}" class="text-right font-bold" style="vertical-align: top; padding-top: 8px; background-color: #fcfcfc;">
+                     {{ number_format($row->total, 0, ',', '.') }}
                 </td>
-            </tr>
-        @endforelse
-    </tbody>
+            @endif
+        </tr>
+        @endforeach
+    @empty
+        <tr>
+            <td colspan="7" class="text-center" style="padding: 30px; color: #7f8c8d;">
+                <i>Tidak ada data transaksi pada periode ini.</i>
+            </td>
+        </tr>
+    @endforelse
+</tbody>
     <tfoot>
         <tr style="background-color: #D9E9FF; border-top: 2px solid #2c3e50;">
             <td colspan="6" class="text-right font-bold" style="padding: 10px; text-transform: uppercase;">

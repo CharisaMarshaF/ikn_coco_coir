@@ -101,7 +101,6 @@
             border-top: 1px solid #000;
             border-bottom: 1px solid #000;
             padding: 5px 4px;
-            text-align: left;
             font-size: 8.5pt;
         }
 
@@ -155,7 +154,6 @@
             font-size: 8pt;
             padding: 3px 4px;
             border-bottom: 1px solid #eee;
-            text-align: left;
             color: #555;
         }
 
@@ -184,6 +182,7 @@
         }
 
         /* UTILS */
+        .text-left { text-align: left; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .bold { font-weight: bold; }
@@ -193,7 +192,6 @@
 </head>
 
 <body>
-
 
     <!-- Header Logo & Title -->
     <table class="header-table">
@@ -209,7 +207,6 @@
                     {{ $company->alamat ?? '-' }}<br>
                     Telp: {{ $company->telepon ?? '-' }} {{ $company->email ? ' | Email: ' . $company->email : '' }}<br>
                     {{ $company->website }}
-
                 </div>
             </td>
             <td class="document-title">
@@ -221,7 +218,6 @@
     <!-- Info Pelanggan & Nota -->
     <table class="info-container">
         <tr>
-            <!-- Kolom Kiri: Pelanggan -->
             <td width="55%">
                 <span class="label-yth">KEPADA YTH:</span>
                 <table class="sub-info-table">
@@ -243,7 +239,6 @@
                 </table>
             </td>
 
-            <!-- Kolom Kanan: Detail Nota -->
             <td width="45%">
                 <div style="margin-left: 20px;">
                     <span class="label-yth" style="text-decoration: none; color: transparent;">.</span>
@@ -276,8 +271,8 @@
         <thead>
             <tr>
                 <th width="5%" class="text-center">NO</th>
-                <th width="{{ $type == 'invoice' ? '45%' : '75%' }}">NAMA BARANG</th>
-                <th width="15%" class="text-center">QTY AWAL</th>
+                <th width="{{ $type == 'invoice' ? '45%' : '75%' }}" class="text-left">NAMA BARANG</th>
+                <th width="15%" class="text-center">QTY</th>
                 @if ($type == 'invoice')
                     <th width="15%" class="text-right">HARGA</th>
                     <th width="20%" class="text-right">TOTAL</th>
@@ -294,11 +289,11 @@
                 @endphp
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
-                    <td class="uppercase">{{ $item->produk->nama }}</td>
-                    <td class="text-">{{ $qtyAwal + 0 }} {{ $item->produk->satuan }}</td>
+                    <td class="text-left uppercase">{{ $item->produk->nama }}</td>
+                    <td class="text-center">{{ $qtyAwal + 0 }} {{ $item->produk->satuan }}</td>
                     @if ($type == 'invoice')
-                        <td class="text-">{{ number_format($item->harga, 0, ',', '.') }}</td>
-                        <td class="text-">{{ number_format($subtotalAwal, 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($item->harga, 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($subtotalAwal, 0, ',', '.') }}</td>
                     @endif
                 </tr>
             @endforeach
@@ -311,7 +306,7 @@
             <table class="summary-table">
                 <tr>
                     <td class="bold text-right">TOTAL TAGIHAN:</td>
-                    <td class="bold text- border-total" style="width: 50%;">
+                    <td class="bold text-right border-total" style="width: 50%;">
                         Rp {{ number_format($totalOriginal, 0, ',', '.') }}
                     </td>
                 </tr>
@@ -333,7 +328,7 @@
                 </tr>
                 <tr>
                     <th width="5%" class="text-center">NO</th>
-                    <th width="{{ $type == 'invoice' ? '45%' : '75%' }}">NAMA BARANG</th>
+                    <th width="{{ $type == 'invoice' ? '45%' : '75%' }}" class="text-left">NAMA BARANG</th>
                     <th width="15%" class="text-center">QTY RTN</th>
                     @if($type == 'invoice')
                         <th width="15%" class="text-right">HARGA</th>
@@ -347,11 +342,11 @@
                     @if ($item->qty_return > 0)
                         <tr>
                             <td class="text-center">{{ $noReturn++ }}</td>
-                            <td class="uppercase">{{ $item->produk->nama }}</td>
-                            <td class="text-">{{ $item->qty_return + 0 }} {{ $item->produk->satuan }}</td>
+                            <td class="text-left uppercase">{{ $item->produk->nama }}</td>
+                            <td class="text-center">{{ $item->qty_return + 0 }} {{ $item->produk->satuan }}</td>
                             @if($type == 'invoice')
-                                <td class="text-">{{ number_format($item->harga, 0, ',', '.') }}</td>
-                                <td class="text-">{{ number_format($item->qty_return * $item->harga, 0, ',', '.') }}</td>
+                                <td class="text-right">{{ number_format($item->harga, 0, ',', '.') }}</td>
+                                <td class="text-right">{{ number_format($item->qty_return * $item->harga, 0, ',', '.') }}</td>
                             @endif
                         </tr>
                     @endif
@@ -367,9 +362,9 @@
     <table class="footer-sign">
         <tr>
             <td>
-                ( {{ auth()->check() ? auth()->user()->name : '.................' }} )
+                 Admin,
                 <div class="sign-space"></div>
-                (.................)
+                ( {{ auth()->check() ? auth()->user()->name : '.................' }} )
             </td>
             <td>
                 {{ $type == 'sj' ? 'Sopir/Logistik,' : '' }}
