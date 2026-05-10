@@ -250,6 +250,15 @@
                         <h2 class="font-medium text-base mr-auto">Input Kas Manual</h2>
                     </div>
                     <div class="modal-body grid grid-cols-12 gap-4 gap-y-3">
+                        <div class="col-span-12 ">
+                        <label class="form-label">Pilih Kategori Kas</label>
+                        <select name="kategori_kas_id" class="form-select" required>
+                            <option value="">-- Pilih Kategori --</option>
+                            @foreach ($kategoris as $kat)
+                                <option value="{{ $kat->id }}">{{ $kat->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                         <div class="col-span-12">
                             <label class="form-label">Pilih Rekening</label>
                             <select name="rekening_id" class="form-select" required>

@@ -67,6 +67,13 @@
                                             <div class="menu__title"> Client </div>
                                         </a>
                                     </li>
+                                    <li>
+                                        <a href="{{ route('kategori-kas.index') }}"
+                                            class="menu {{ request()->routeIs('kategori-kas.*') ? 'menu--active' : '' }}">
+                                            <div class="menu__icon"> <i data-lucide="users"></i> </div>
+                                            <div class="menu__title"> Kategori Kas </div>
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
 
@@ -252,6 +259,13 @@
                                             class="side-menu {{ request()->routeIs('konfigurasi.*') ? 'side-menu--active' : '' }}">
                                             <div class="side-menu__icon"> <i data-lucide="settings"></i> </div>
                                             <div class="side-menu__title"> Konfigurasi </div>
+                                        </a>
+                                    </li>
+                                     <li>
+                                        <a href="{{ route('kategori-kas.index') }}"
+                                            class="side-menu {{ request()->routeIs('kategori-kas.*') ? 'side-menu--active' : '' }}">
+                                            <div class="side-menu__icon"> <i data-lucide="tag"></i> </div>
+                                            <div class="side-menu__title"> Kategori Kas </div>
                                         </a>
                                     </li>
                                 </ul>

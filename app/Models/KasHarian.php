@@ -15,6 +15,7 @@ class KasHarian extends Model
 
     protected $fillable = [
         'rekening_id',
+        'kategori_kas_id',
         'tanggal',
         'jenis',
         'kategori',
@@ -31,5 +32,11 @@ class KasHarian extends Model
     public function details()
     {
         return $this->hasMany(KasDetail::class, 'kas_harian_id');
+    }
+
+    // KasHarian.php
+    public function kategoriKas()
+    {
+        return $this->belongsTo(KategoriKas::class, 'kategori_kas_id');
     }
 }

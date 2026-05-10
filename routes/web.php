@@ -7,6 +7,7 @@ use App\Http\Controllers\CompanyProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HasilProduksiController;
 use App\Http\Controllers\KasHarianController;
+use App\Http\Controllers\KategoriKasController;
 use App\Http\Controllers\KeuanganController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PembelianController;
@@ -74,7 +75,7 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
     Route::get('penjualan/{id}/print', [PenjualanController::class, 'print'])->name('penjualan.print');
     Route::get('penjualan/{id}/pdf', [PenjualanController::class, 'downloadPDF'])->name('penjualan.pdf');
     Route::get('penjualan/return', [PenjualanController::class, 'indexReturn'])->name('penjualan.return');
-    
+    Route::resource('kategori-kas', KategoriKasController::class);
     Route::get('keuangan/kas', [KasHarianController::class, 'index'])->name('kas.index');
     Route::post('keuangan/kas', [KasHarianController::class, 'store'])->name('kas.store');
     Route::delete('keuangan/kas/{id}', [KasHarianController::class, 'destroy'])->name('kas.destroy');
