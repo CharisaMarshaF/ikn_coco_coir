@@ -10,13 +10,16 @@
     </div>
 
     @if (session('success'))
-        <div class="alert alert-success show flex items-center mb-2 mt-5" role="alert">
+        <div class="alert alert-success text-white alert-dismissible show flex items-center mb-2 mt-5" role="alert">
             <i data-lucide="check-circle" class="w-6 h-6 mr-2"></i> {{ session('success') }}
+            <button type="button" class="btn-close text-white" data-tw-dismiss="alert" aria-label="Close">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
         </div>
     @endif
 
     @if (session('error') || $errors->any())
-        <div class="alert alert-danger show flex items-center mb-2 mt-5" role="alert">
+        <div class="alert alert-danger text-white alert-dismissible show flex items-center mb-2 mt-5" role="alert">
             <i data-lucide="alert-octagon" class="w-6 h-6 mr-2"></i>
             @if (session('error'))
                 {{ session('error') }}

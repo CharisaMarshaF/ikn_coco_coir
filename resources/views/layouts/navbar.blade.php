@@ -22,16 +22,16 @@
 
                             <li>
                                 <a href="javascript:;"
-                                    class="menu {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*') ? 'menu--active' : '' }}">
+                                    class="menu {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*','kategori-kas.*') ? 'menu--active' : '' }}">
                                     <div class="menu__icon"> <i data-lucide="database"></i> </div>
                                     <div class="menu__title">
                                         Master Data
                                         <i data-lucide="chevron-down"
-                                            class="menu__sub-icon {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*') ? 'transform rotate-180' : '' }}"></i>
+                                            class="menu__sub-icon {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*','kategori-kas.*') ? 'transform rotate-180' : '' }}"></i>
                                     </div>
                                 </a>
                                 <ul
-                                    class="{{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*') ? 'menu__sub-open' : '' }}">
+                                    class="{{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*','kategori-kas.*') ? 'menu__sub-open' : '' }}">
                                     <li>
                                         <a href="{{ route('users.index') }}"
                                             class="menu {{ request()->routeIs('users.*') ? 'menu--active' : '' }}">
@@ -70,7 +70,7 @@
                                     <li>
                                         <a href="{{ route('kategori-kas.index') }}"
                                             class="menu {{ request()->routeIs('kategori-kas.*') ? 'menu--active' : '' }}">
-                                            <div class="menu__icon"> <i data-lucide="users"></i> </div>
+                                            <div class="menu__icon"> <i data-lucide="tag"></i> </div>
                                             <div class="menu__title"> Kategori Kas </div>
                                         </a>
                                     </li>
@@ -193,19 +193,19 @@
                             <li>
                                 <!-- Menu Utama Master Data -->
                                 <a href="javascript:;"
-                                    class="side-menu {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*') ? 'side-menu--active' : '' }}">
+                                    class="side-menu {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*','kategori-kas.*') ? 'side-menu--active' : '' }}">
                                     <div class="side-menu__icon"> <i data-lucide="database"></i> </div>
                                     <div class="side-menu__title">
                                         Master Data
                                         <div
-                                            class="side-menu__sub-icon {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*') ? 'transform rotate-180' : '' }}">
+                                            class="side-menu__sub-icon {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*','kategori-kas.*') ? 'transform rotate-180' : '' }}">
                                             <i data-lucide="chevron-down"></i>
                                         </div>
                                     </div>
                                 </a>
 
                                 <ul
-                                    class="{{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*') ? 'side-menu__sub-open' : '' }}">
+                                    class="{{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*','kategori-kas.*') ? 'side-menu__sub-open' : '' }}">
                                     <!-- Submenu User -->
                                     <li>
                                         <a href="{{ route('users.index') }}"

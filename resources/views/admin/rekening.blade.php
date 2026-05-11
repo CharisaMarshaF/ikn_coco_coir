@@ -10,13 +10,13 @@
         <div class="intro-y col-span-12">
 
             @if (session('success'))
-                <div class="alert alert-success show flex items-center mb-2 mt-5" role="alert">
+                <div class="alert alert-success text-white show flex items-center mb-2 mt-5" role="alert">
                     <i data-lucide="check-circle" class="w-6 h-6 mr-2"></i> {{ session('success') }}
                 </div>
             @endif
 
             @if (session('error') || $errors->any())
-                <div class="alert alert-danger show flex items-center mb-2 mt-5" role="alert">
+                <div class="alert alert-danger text-white show flex items-center mb-2 mt-5" role="alert">
                     <i data-lucide="alert-octagon" class="w-6 h-6 mr-2"></i>
                     @if (session('error'))
                         {{ session('error') }}
