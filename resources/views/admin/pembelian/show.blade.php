@@ -8,7 +8,7 @@
         {{-- Hanya tampilkan tombol cetak jika status BUKAN cancel --}}
         @if($pembelian->status_pembayaran !== 'cancel')
             <a href="{{ route('pembelian.pdf', $pembelian->id) }}" target="_blank" class="btn btn-primary shadow-md mr-2">
-                <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak PDF
+                <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak Invoice
             </a>
         @endif
 

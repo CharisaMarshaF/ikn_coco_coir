@@ -8,7 +8,9 @@ class HasilProduksi extends Model
 {
     protected $table = 'hasil_produksi';
     protected $fillable = ['tanggal', 'kode_produksi', 'keterangan', 'user_id'];
-
+    protected $casts = [
+        'tanggal' => 'date', // Atau 'datetime'
+    ];
     public function details() {
         return $this->hasMany(HasilProduksiDetail::class);
     }

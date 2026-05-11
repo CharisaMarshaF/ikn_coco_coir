@@ -152,9 +152,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="7" class="text-center p-10 text-slate-500">Tidak ada data ditemukan.</td>
-                            </tr>
+   
                         @endforelse
                     </tbody>
                 </table>

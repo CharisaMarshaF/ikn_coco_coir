@@ -10,6 +10,13 @@
                 </div>
             </div>
         @endif
+        @if (session('error'))
+            <div class="intro-y col-span-12">
+                <div class="alert alert-danger show flex items-center mb-2" role="alert">
+                    <i data-lucide="alert-octagon" class="w-6 h-6 mr-2"></i> {{ session('error') }}
+                </div>
+            </div>
+        @endif
 
         <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
             <a href="{{ route('pengambilan.create') }}" class="btn btn-primary shadow-md mr-2">

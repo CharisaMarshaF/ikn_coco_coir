@@ -4,13 +4,49 @@
 <div class="grid grid-cols-12 gap-6">
     <div class="col-span-12">
         <div class="grid grid-cols-12 gap-6">
+            
+            {{-- BAGIAN BARU: WIDGET SALDO REKENING --}}
+<div class="col-span-12 mt-8">
+    <div class="intro-y flex items-center h-10">
+        <h2 class="text-lg font-medium truncate mr-5">Saldo Kas & Bank</h2>
+    </div>
+    <div class="grid grid-cols-12 gap-6 mt-5">
+        @forelse($listRekening as $rek)
+            <div class="col-span-12 sm:col-span-6 xl:col-span-3 intro-y">
+                <a href="{{ route('dashboard.export-pdf', ['rekening_id' => $rek->id]) }}" target="_blank" title="Klik untuk cetak mutasi bulan ini">
+                    <div class="report-box zoom-in">
+                        <div class="box p-5">
+                            <div class="flex">
+                                <i data-lucide="credit-card" class="report-box__icon text-primary"></i>
+                                <div class="ml-auto">
+                                    <div class="report-box__indicator bg-success cursor-pointer" title="Klik untuk Cetak Mutasi">PDF</div>
+                                </div>
+                            </div>
+                            <div class="text-xl font-medium leading-8 mt-6">
+                                <span class="text-xs align-top">Rp</span> {{ number_format($rek->saldo, 0, ',', '.') }}
+                            </div>
+                            <div class="text-base text-slate-500 mt-1">{{ $rek->nama }}</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        @empty
+            {{-- TAMPILAN JIKA DATA KOSONG --}}
+            <div class="col-span-12 intro-y">
+                <div class="box p-5 text-center text-slate-500 italic">
+                    <i data-lucide="info" class="w-8 h-8 mx-auto mb-2 text-slate-400"></i>
+                    Belum ada data rekening tersedia.
+                </div>
+            </div>
+        @endforelse
+    </div>
+</div>
             {{-- BAGIAN 1: RINGKASAN LAPORAN --}}
             <div class="col-span-12 mt-8">
                 <div class="intro-y flex items-center h-10">
                     <h2 class="text-lg font-medium truncate mr-5">Ringkasan Laporan</h2>
                 </div>
                 <div class="grid grid-cols-12 gap-6 mt-5">
-                    <!-- Produksi Harian -->
                     <div class="col-span-12 sm:col-span-6 xl:col-span-4 intro-y">
                         <div class="report-box zoom-in">
                             <div class="box p-5">
@@ -28,7 +64,6 @@
                         </div>
                     </div>
 
-                    <!-- Omset Penjualan Bulan Ini -->
                     <div class="col-span-12 sm:col-span-6 xl:col-span-4 intro-y">
                         <div class="report-box zoom-in">
                             <div class="box p-5">
@@ -46,7 +81,6 @@
                         </div>
                     </div>
 
-                    <!-- Stok Sekarang Produk -->
                     <div class="col-span-12 sm:col-span-6 xl:col-span-4 intro-y">
                         <div class="report-box zoom-in">
                             <div class="box p-5">
@@ -63,7 +97,7 @@
                 </div>
             </div>
 
-            {{-- BAGIAN 2: GRAFIK PENJUALAN 12 BULAN TERAKHIR --}}
+            {{-- BAGIAN 2: GRAFIK --}}
             <div class="col-span-12 lg:col-span-8 mt-8">
                 <div class="intro-y flex items-center h-10">
                     <h2 class="text-lg font-medium truncate mr-5">Grafik Penjualan 12 Bulan Terakhir</h2>
@@ -75,7 +109,7 @@
                 </div>
             </div>
 
-            {{-- BAGIAN 3: PENJUALAN TERBARU --}}
+            {{-- BAGIAN 3: TRANSAKSI TERBARU --}}
             <div class="col-span-12 lg:col-span-4 mt-8">
                 <div class="intro-y flex items-center h-10">
                     <h2 class="text-lg font-medium truncate mr-5">Penjualan Terbaru</h2>

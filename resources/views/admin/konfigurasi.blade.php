@@ -5,9 +5,29 @@
     <div class="col-12">
         <div class="card my-4">
             <div class="card-body px-0 pb-2">
-                @if(session('success'))
-                    <div class="alert alert-success text-white mx-3">{{ session('success') }}</div>
-                @endif
+<div class="intro-y col-span-12">
+            {{-- Alert Success --}}
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible show flex items-center mb-2" role="alert">
+                    <i data-lucide="check-circle" class="w-6 h-6 mr-2"></i>
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-tw-dismiss="alert" aria-label="Close">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            @endif
+
+            {{-- Alert Error --}}
+            @if (session('error'))
+                <div class="alert alert-danger alert-dismissible show flex items-center mb-2" role="alert">
+                    <i data-lucide="alert-octagon" class="w-6 h-6 mr-2"></i>
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-tw-dismiss="alert" aria-label="Close">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            @endif
+        </div>
 
                 <form action="{{ route('konfigurasi.update') }}" method="POST" enctype="multipart/form-data">
                     <div class="modal-content">

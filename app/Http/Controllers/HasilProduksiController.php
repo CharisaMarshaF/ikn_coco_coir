@@ -13,75 +13,103 @@ use Illuminate\Support\Facades\DB;
 
 class HasilProduksiController extends Controller
 {
-public function index(Request $request)
-{
-    $search = $request->get('search');
-    
-    // Default filter: Bulan ini (dari tanggal 1 sampai hari ini)
-    $tgl_mulai = $request->get('tgl_mulai', date('Y-m-01'));
-    $tgl_selesai = $request->get('tgl_selesai', date('Y-m-d'));
+    public function index(Request $request)
+    {
+        $search = $request->get('search');
 
-    $hasilProduksi = HasilProduksi::with(['details.produk' => function($q) {
+        // Default filter: Bulan ini (dari tanggal 1 sampai hari ini)
+        $tgl_mulai = $request->get('tgl_mulai', date('Y-m-01'));
+        $tgl_selesai = $request->get('tgl_selesai', date('Y-m-d'));
+
+        $hasilProduksi = HasilProduksi::with(['details.produk' => function ($q) {
             $q->withTrashed();
         }, 'user'])
-        ->when($search, function ($query) use ($search) {
-            $query->where('kode_produksi', 'like', "%{$search}%");
-        })
-        // Filter Tanggal
-        ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai])
-        // Urutan terbaru
-        ->orderBy('tanggal', 'desc')
-        ->orderBy('created_at', 'desc')
-        ->paginate(10);
+            ->when($search, function ($query) use ($search) {
+                $query->where('kode_produksi', 'like', "%{$search}%");
+            })
+            // Filter Tanggal
+            ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai])
+            // Urutan terbaru
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
-    $title = 'Data Hasil Produksi';
-    return view('admin.hasil_produksi.index', compact('hasilProduksi', 'title', 'tgl_mulai', 'tgl_selesai'));
-}
-
-public function cetakLaporan(Request $request)
-{
-    $tgl_mulai = $request->get('start_date') ?? $request->get('tgl_mulai') ?? \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
-    $tgl_selesai = $request->get('end_date') ?? $request->get('tgl_selesai') ?? \Carbon\Carbon::now()->format('Y-m-d');
-
-    $data = HasilProduksi::with(['details.produk' => function($q) {
-            $q->withTrashed(); 
-        }, 'user'])
-        ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai])
-        ->orderBy('tanggal', 'asc')
-        ->get();
-
-    $summary = [];
-    foreach($data as $row) {
-        foreach($row->details as $det) {
-            $prodName = $det->produk ? ($det->produk->trashed() ? $det->produk->nama . ' (Dihapus)' : $det->produk->nama) : 'N/A';
-            
-            // Tambahkan kategori pola ke dalam kunci summary agar total terpisah per kategori
-            $pola = $det->kategori_pola;
-            $key = $prodName . ($pola != 'Jadi' ? ' - ' . str_replace('_', ' ', $pola) : '');
-
-            if(!isset($summary[$key])) {
-                $summary[$key] = [
-                    'nama' => $prodName,
-                    'pola' => $pola,
-                    'jenis' => $det->produk->jenis, // Tambahkan baris ini
-                    'qty' => 0,
-                    'satuan' => $det->produk->satuan ?? '-'
-                ];
-            }
-            $summary[$key]['qty'] += $det->qty;
-        }
+        $title = 'Data Hasil Produksi';
+        return view('admin.hasil_produksi.index', compact('hasilProduksi', 'title', 'tgl_mulai', 'tgl_selesai'));
     }
 
-    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.hasil_produksi.pdf_laporan', [
-        'data' => $data,
-        'summary' => $summary,
-        'tgl_mulai' => $tgl_mulai,
-        'tgl_selesai' => $tgl_selesai,
-        'konfigurasi' => \App\Models\CompanyProfile::first()
-    ])->setPaper('a4', 'portrait');
+    public function cetakLaporan(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'produk_id' => 'required',
+            'start_date' => 'required',
+            'end_date' => 'required',
+        ]);
 
-    return $pdf->stream('Laporan-Produksi-'.$tgl_mulai.'-to-'.$tgl_selesai.'.pdf');
-}
+        $tgl_mulai = $request->get('start_date');
+        $tgl_selesai = $request->get('end_date');
+        $produk_id = $request->get('produk_id');
+
+        // Ambil data produk untuk judul
+        $produk = \App\Models\Produk::withTrashed()->findOrFail($produk_id);
+
+        $data = HasilProduksi::with(['details' => function ($q) use ($produk_id) {
+            $q->where('produk_id', $produk_id);
+        }])
+            ->whereHas('details', function ($q) use ($produk_id) {
+                $q->where('produk_id', $produk_id);
+            })
+            ->whereBetween('tanggal', [$tgl_mulai, $tgl_selesai])
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        $report = [];
+        $totalBulat = 0;
+        $totalSetengah = 0;
+        $totalJadi = 0;
+
+        foreach ($data as $row) {
+            $tgl = \Carbon\Carbon::parse($row->tanggal)->format('Y-m-d');
+
+            if (!isset($report[$tgl])) {
+                $report[$tgl] = [
+                    'tanggal' => $row->tanggal,
+                    'bulat' => 0,
+                    'setengah_jadi' => 0,
+                    'jadi' => 0
+                ];
+            }
+
+            foreach ($row->details as $det) {
+                if ($det->produk_id == $produk_id) {
+                    if ($det->kategori_pola == 'Bulat') {
+                        $report[$tgl]['bulat'] += $det->qty;
+                        $totalBulat += $det->qty;
+                    } elseif ($det->kategori_pola == 'Setengah_jadi') {
+                        $report[$tgl]['setengah_jadi'] += $det->qty;
+                        $totalSetengah += $det->qty;
+                    } else {
+                        $report[$tgl]['jadi'] += $det->qty;
+                        $totalJadi += $det->qty;
+                    }
+                }
+            }
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.hasil_produksi.pdf_laporan', [
+            'report' => $report,
+            'produk' => $produk,
+            'totalBulat' => $totalBulat,
+            'totalSetengah' => $totalSetengah,
+            'totalJadi' => $totalJadi,
+            'tgl_mulai' => $tgl_mulai,
+            'tgl_selesai' => $tgl_selesai,
+            'konfigurasi' => \App\Models\CompanyProfile::first()
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Laporan-Produksi-' . $produk->nama . '.pdf');
+    }
     public function create()
     {
         // Saat mencatat produksi baru, hanya tampilkan produk yang BELUM dihapus

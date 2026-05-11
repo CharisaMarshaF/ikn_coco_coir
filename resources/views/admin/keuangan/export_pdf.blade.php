@@ -32,18 +32,36 @@
         /* Style untuk detail item */
         .row-detail td { background-color: #fcfcfc; color: #555; }
 
-        /* Fix Width Kolom */
-        .col-no { width: 25px; }
-        .col-tgl { width: 90px; } /* Diperlebar agar muat format April */
-        .col-ket { width: auto; }
-        .col-detail-amt { width: 90px; } /* Kolom baru untuk nominal detail */
-        .col-kat { width: 85px; }
-        .col-saldo { width: 100px; }
+        /* Header Section */
+        .header { 
+            text-align: center; 
+            margin-bottom: 2px; 
+            padding-bottom: 8px;
+        }
+        .header h2 { 
+            margin: 0; 
+            text-transform: uppercase; 
+            font-size: 16px; 
+            color: #2c3e50;
+        }
+        .header h3 { 
+            margin: 4px 0; 
+            font-size: 12px; 
+            color: #555;
+        }
+        .header p { 
+            margin: 2px 0; 
+            font-size: 10px;
+            color: #666;
+        }
+
     </style>
 </head>
-<body>
-    
-    <h2 style="text-align: center; text-transform: uppercase;">Laporan Mutasi Kas Harian</h2>
+<body>  
+    <div class="header">
+        <h2>{{ $konfigurasi->nama_cv ?? 'PT INTER KARANGANYAR NUSANTARA' }}</h2>
+        <h3>LAPORAN MUTASI KAS HARIAN</h3>
+    </div>
     <table class="info-table">
         <tr>
             <td class="info-label">Nama Rekening</td>
@@ -60,26 +78,26 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th class="col-no">NO</th>
-                <th class="col-tgl">TANGGAL</th>
-                <th class="col-ket">KETERANGAN / DETAIL</th>
-                <th class="col-detail-amt">NOMINAL</th>
+                <th width="5%" class="col-no">NO</th>
+                <th width="15%" class="col-tgl">TANGGAL</th>
+                <th width="30%" class="col-ket">KETERANGAN / DETAIL</th>
+                <th width="15%" class="col-detail-amt">NOMINAL</th>
                 @foreach($kategoriTerlibat as $kat)
-                    <th class="col-kat">{{ strtoupper($kat->nama) }}</th>
+                    <th width="10%" class="col-kat">{{ strtoupper($kat->nama) }}</th>
                 @endforeach
-                <th class="col-saldo">SALDO</th>
+                <th width="15%" class="col-saldo">SALDO</th>
             </tr>
         </thead>
         <tbody>
             <!-- Saldo Awal -->
             <tr>
-                <td class="text-center">1</td>
-                <td class="text-center">{{ \Carbon\Carbon::parse($tgl_mulai)->translatedFormat('d F Y') }}</td>
-                <td class="font-bold" colspan="2">SALDO AWAL</td>
+                <td width="5%" class="text-center">1</td>
+                <td width="15%" class="text-center">{{ \Carbon\Carbon::parse($tgl_mulai)->translatedFormat('d F Y') }}</td>
+                <td width="30%" class="font-bold" colspan="2">SALDO AWAL</td>
                 @foreach($kategoriTerlibat as $kat)
-                    <td class="text-right">-</td>
+                    <td width="10%" class="text-right">-</td>
                 @endforeach
-                <td class="text-right font-bold">{{ number_format($saldoAwal, 0, ',', '.') }}</td>
+                <td width="15%" class="text-right font-bold">{{ number_format($saldoAwal, 0, ',', '.') }}</td>
             </tr>
 
             @php 
@@ -105,20 +123,20 @@
 
                 <!-- Baris Utama Transaksi -->
                 <tr>
-                    <td class="text-center" rowspan="{{ $rowCount }}">{{ $no++ }}</td>
-                    <td class="text-center" rowspan="{{ $rowCount }}">
+                    <td width="5%" class="text-center" rowspan="{{ $rowCount }}">{{ $no++ }}</td>
+                    <td width="15%" class="text-center" rowspan="{{ $rowCount }}">
                         {{ \Carbon\Carbon::parse($kas->tanggal)->translatedFormat('d F Y') }}
                     </td>
-                    <td class="{{ $hasDetails ? 'font-bold' : '' }}" style="border-bottom: {{ $hasDetails ? 'none' : '1px solid #777' }}">
+                    <td width="30%" class="{{ $hasDetails ? 'font-bold' : '' }}" style="border-bottom: {{ $hasDetails ? 'none' : '1px solid #777' }}">
                         {{ $kas->keterangan ?? 'Tidak ada keterangan' }} 
                     </td>
-                    <td class="text-right" style="border-bottom: {{ $hasDetails ? 'none' : '1px solid #777' }}">
+                    <td width="15%" class="text-right" style="border-bottom: {{ $hasDetails ? 'none' : '1px solid #777' }}">
                         {{-- Kosong di baris utama jika ada detail agar tidak double --}}
-                        {{ $hasDetails ? '' : number_format($nominal, 2, ',', '.') }}
+                        {{ $hasDetails ? '' : number_format($nominal, 0, ',', '.') }}
                     </td>
 
                     @foreach($kategoriTerlibat as $kat)
-                        <td class="text-right" rowspan="{{ $rowCount }}">
+                        <td width="10%" class="text-right" rowspan="{{ $rowCount }}">
                             @if($kas->kategori_kas_id == $kat->id)
                                 <span class="{{ $isMasuk ? 'text-masuk' : 'text-keluar' }}">
                                     {{ $isMasuk ? '+' : '-' }}{{ number_format($nominal, 0, ',', '.') }}
@@ -129,7 +147,7 @@
                         </td>
                     @endforeach
 
-                    <td class="text-right font-bold" rowspan="{{ $rowCount }}">
+                    <td width="15%" class="text-right font-bold" rowspan="{{ $rowCount }}">
                         {{ number_format($runningSaldo, 0, ',', '.') }}
                     </td>
                 </tr>
@@ -138,9 +156,9 @@
                 @if($hasDetails)
                     @foreach($kas->details as $index => $detail)
                     <tr class="row-detail">
-                        <td style="border-top: none; border-bottom: {{ ($index == $kas->details->count() - 1) ? '1px solid #777' : 'none' }}; padding-left: 15px;">
+                        <td width="30%" style="border-top: none; border-bottom: {{ ($index == $kas->details->count() - 1) ? '1px solid #777' : 'none' }}; padding-left: 15px;">
 • {{ $detail->nama_item }} ({{ (int)$detail->jumlah }}x)                        </td>
-                        <td class="text-right" style="border-top: none; border-bottom: {{ ($index == $kas->details->count() - 1) ? '1px solid #777' : 'none' }};">
+                        <td width="15%" class="text-right" style="border-top: none; border-bottom: {{ ($index == $kas->details->count() - 1) ? '1px solid #777' : 'none' }};">
                             {{-- Mengambil kolom subtotal dari model KasDetail --}}
                             {{ number_format($detail->subtotal, 0, ',', '.') }}
                         </td>
@@ -151,13 +169,13 @@
         </tbody>
         <tfoot>
             <tr class="bg-footer font-bold">
-                <td colspan="4" class="text-right">TOTAL MUTASI / SALDO AKHIR</td>
+                <td width="50%" colspan="4" class="text-right">TOTAL MUTASI / SALDO AKHIR</td>
                 @foreach($kategoriTerlibat as $kat)
-                    <td class="text-right">
+                    <td width="10%" class="text-right">
                         {{ number_format($totalPerKat[$kat->id], 0, ',', '.') }}
                     </td>
                 @endforeach
-                <td class="text-right" style="background-color:#D9E9FF;">
+                <td width="15%" class="text-right" style="background-color:#D9E9FF;">
                     {{ number_format($runningSaldo, 0, ',', '.') }}
                 </td>
             </tr>
@@ -165,7 +183,7 @@
     </table>
 
     <div style="margin-top: 15px; font-size: 8pt; text-align: right;">
-        Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }}
+        Dicetak pada: {{ now()->translatedFormat('d F Y ') }}
     </div>
 
 </body>

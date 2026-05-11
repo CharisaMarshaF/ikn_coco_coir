@@ -10,7 +10,7 @@
         <meta name="description" content="Tinker admin is super flexible, powerful, clean & modern responsive tailwind admin template with unlimited possibilities.">
         <meta name="keywords" content="admin template, Tinker Admin Template, dashboard template, flat admin template, responsive admin template, web app">
         <meta name="author" content="LEFT4CODE">
-        <title>Login - IKN COCO COIR</title>
+        <title>Login - PT INTER KARANGANYAR NUSANTARA</title>
         <!-- BEGIN: CSS Assets-->
         <link rel="stylesheet" href="{{ asset('template/dist/css/app.css') }}" />
         <!-- END: CSS Assets-->
@@ -23,7 +23,7 @@
                 <div class="hidden xl:flex flex-col min-h-screen">
                     <a href="" class="-intro-x flex items-center pt-5">
                         <img alt="Midone - HTML Admin Template" class="w-6" src="{{ asset('template/logo.png') }}">
-                        <span class="text-white text-lg ml-3"> IKN COCO COIR </span> 
+                        <span class="text-white text-lg ml-3"> PT INTER KARANGANYAR NUSANTARA </span> 
                     </a>
                     <div class="my-auto">
                         <img alt="Midone - HTML Admin Template" class="-intro-x w-1/2 -mt-16" src="{{ asset('template/dist/images/illustration.svg') }}">

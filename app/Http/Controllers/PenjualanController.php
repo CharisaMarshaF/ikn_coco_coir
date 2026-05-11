@@ -435,7 +435,7 @@ class PenjualanController extends Controller
         $customPaper = [0, 0, 595, 420]; // A5 Landscape
 
         $pdf = Pdf::loadView('admin.penjualan.pdf', compact('penjualan', 'type', 'company'))
-            ->setPaper($customPaper, 'landscape');
+            ->setPaper($customPaper, 'potrait');
 
         $filename = ($type == 'sj' ? 'SJ-' : 'INV-') . $penjualan->id . '.pdf';
         return $pdf->stream($filename);

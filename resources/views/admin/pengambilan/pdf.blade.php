@@ -56,7 +56,7 @@
             color: #2c3e50;
             font-weight: bold; 
             text-transform: uppercase; 
-            font-size: 8.5px; 
+            font-size: 8px; 
             padding: 8px 4px;
             border: 1px solid #7f8c8d;
             vertical-align: middle;
@@ -64,8 +64,8 @@
 
         td { 
             border: 1px solid #7f8c8d; 
-            padding: 6px 6px; 
-            vertical-align: top; /* Align atas sesuai permintaan */
+            padding: 6px 4px; 
+            vertical-align: middle;
             word-wrap: break-word; 
         }
 
@@ -73,109 +73,99 @@
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .font-bold { font-weight: bold; }
-        .uppercase { text-transform: uppercase; }
 
         /* Row Highlights */
         .bg-light { background-color: #f9fbfd; }
         
-        h4 { 
-            margin: 15px 0 5px 0; 
-            font-size: 10px; 
-            color: #2c3e50; 
-            text-transform: uppercase;
-        }
-
-        .unit-text {
-            font-size: 8px;
-            color: #7f8c8d;
-            margin-left: 2px;
-        }
-
         /* Footer Stamp */
         .footer-stamp {
             margin-top: 15px;
-            font-size: 8px;
-            color: #999;
-            font-style: italic;
+            font-size: 9px;
+            color: #000;
+        }
+
+        .total-row {
+            background-color: #eee;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h2>{{ $konfigurasi->nama_cv ?? 'IKN COCO COIR' }}</h2>
-        <h3>LAPORAN PENGAMBILAN BAHAN BAKU</h3>
+        <h3>LAPORAN PENGAMBILAN BAHAN BAKU (RINGKASAN HARIAN)</h3>
         <p>Periode: 
             <strong>{{ \Carbon\Carbon::parse($dari)->translatedFormat('j F Y') }}</strong> 
             s/d 
             <strong>{{ \Carbon\Carbon::parse($sampai)->translatedFormat('j F Y') }}</strong>
         </p>
     </div>
+
+    @php
+        // 1. Ambil semua bahan unik untuk kolom (th)
+        $daftarBahan = $data->pluck('bahan')->unique('id')->sortBy('nama');
+        
+        // 2. LOGIKA GROUP BY TANGGAL:
+        // Kita kelompokkan data berdasarkan tanggal saja, lalu kita sum jumlahnya
+        $reportData = $data->groupBy(function($item) {
+            return \Carbon\Carbon::parse($item->pengambilan->tanggal)->format('Y-m-d');
+        });
+
+        $grandTotal = [];
+        foreach($daftarBahan as $b) {
+            $grandTotal[$b->id] = 0;
+        }
+    @endphp
+
     <table>
         <thead>
             <tr>
-                <th width="4%">No</th>
-                <th width="16%">Tanggal</th>
-                <th width="50%">Nama Bahan</th>
-                <th width="30%">Qty Ambil</th>
+                <th width="5%">No</th>
+                <th width="15%">Tanggal</th>
+                @foreach($daftarBahan as $b)
+                    <th width="10%">{{ $b->nama }} ({{ $b->satuan ?? 'Kg' }})</th>
+                @endforeach
             </tr>
         </thead>
         <tbody>
-            @php 
-                $groupedData = $data->groupBy('pengambilan_id');
-                $no = 1;
-            @endphp
-
-            @foreach($groupedData as $pengambilanId => $items)
-                @php $rowClass = ($no % 2 == 0) ? 'bg-light' : ''; @endphp
-                @foreach($items as $index => $row)
-                <tr class="{{ $rowClass }}">
-                    @if($index === 0)
-                        <td class="text-center font-bold" rowspan="{{ $items->count() }}">{{ $no++ }}</td>
-                        <td class="text-center" rowspan="{{ $items->count() }}">
-                            {{ \Carbon\Carbon::parse($row->pengambilan->tanggal)->translatedFormat('j F Y') }}
+            @php $no = 1; @endphp
+            @forelse($reportData as $tanggalStr => $items)
+                <tr class="{{ $no % 2 == 0 ? 'bg-light' : '' }}">
+                    <td width="5%" class="text-center">{{ $no++ }}</td>
+                    <td width="15%" class="text-center">
+                        {{ \Carbon\Carbon::parse($tanggalStr)->translatedFormat('j M Y') }}
+                    </td>
+                    
+                    @foreach($daftarBahan as $b)
+                        @php 
+                            // Hitung total pengambilan bahan ini pada tanggal tersebut
+                            $totalPerHari = $items->where('bahan_id', $b->id)->sum('qty');
+                            $grandTotal[$b->id] += $totalPerHari;
+                        @endphp
+                        <td class="text-right">
+                            {{ number_format($totalPerHari, 2, ',', '.') }}
                         </td>
-                    @endif
-
-                    <td>
-                        {{ $row->bahan ? ($row->bahan->trashed() ? $row->bahan->nama . ' (Dihapus)' : $row->bahan->nama) : 'N/A' }}
-                    </td>
-                    <td class="text-right">
-                        <span class="font-bold">{{ number_format($row->qty, 2, ',', '.') }}</span>
-                        <span class="unit-text">{{ $row->bahan->satuan ?? '-' }}</span>
-                    </td>
+                    @endforeach
                 </tr>
-                @endforeach
-            @endforeach
-            @if($data->isEmpty())
-            <tr>
-                <td colspan="4" class="text-center" style="padding: 20px;">Tidak ada data pengambilan pada periode ini.</td>
-            </tr>
-            @endif
-        </tbody>
-    </table>
-
-    <div style="width: 50%;">
-        <h4>Total Akumulasi Bahan</h4>
-        <table>
-            <thead>
+            @empty
                 <tr>
-                    <th width="60%">Nama Bahan</th>
-                    <th width="30%">Total Qty</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($summary as $index => $item)
-                <tr class="{{ $index % 2 != 0 ? 'bg-light' : '' }}">
-                    <td>{{ $item['nama'] }}</td>
-                    <td class="text-right">
-                        <span class="font-bold">{{ number_format($item['total_qty'], 2, ',', '.') }}</span>
-                        <span class="unit-text">{{ $item['satuan'] }}</span>
+                    <td colspan="{{ 2 + $daftarBahan->count() }}" class="text-center" style="padding: 20px;">
+                        Tidak ada data pengambilan pada periode ini.
                     </td>
                 </tr>
+            @endforelse
+        </tbody>
+        @if($reportData->isNotEmpty())
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="2" class="text-center font-bold">Total</td>
+                @foreach($daftarBahan as $b)
+                    <td class="text-right">{{ number_format($grandTotal[$b->id], 2, ',', '.') }}</td>
                 @endforeach
-            </tbody>
-        </table>
-    </div>
+            </tr>
+        </tfoot>
+        @endif
+    </table>
 
     <div class="footer-stamp">
         Dicetak otomatis oleh Sistem pada: {{ now()->translatedFormat('j F Y') }}

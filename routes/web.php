@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     // Dashboard Routes
 Route::get('/admin/dashboard', [DashboardController::class, 'index'])
     ->name('admin.dashboard');
+    Route::get('/dashboard/export-pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.export-pdf');
     Route::get('/staff/dashboard', function () {
         return view('admin.dashboard');
     })->name('staff.dashboard');

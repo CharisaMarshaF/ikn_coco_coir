@@ -5,64 +5,55 @@
     <title>{{ $type == 'sj' ? 'Surat Jalan' : 'Invoice' }} - {{ $penjualan->id }}</title>
     <style>
         @page {
-            size: {{ $type == 'sj' ? '148mm 210mm' : '210mm 148mm' }};
-            margin: 8mm 10mm;
+            size: A4 portrait;
+            margin: 15mm 15mm;
         }
 
         body {
             font-family: 'Courier', monospace;
-            font-size: 9pt;
+            font-size: 10pt;
             margin: 0;
             padding: 0;
             color: #000;
-            line-height: 1.2;
-        }
-
-        #watermark {
-            position: fixed;
-            top: 20%;
-            left: 25%;
-            width: 250px;
-            opacity: 0.06;
-            z-index: -1000;
+            line-height: 1.3;
         }
 
         /* HEADER SECTION */
         .header-table {
             width: 100%;
             border-bottom: 2px double #000;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
         }
 
         .logo-top {
-            width: 55px;
+            width: 70px;
             height: auto;
         }
 
         .company-name {
-            font-size: 12pt;
+            font-size: 14pt;
             font-weight: bold;
             text-transform: uppercase;
             margin: 0;
         }
 
         .company-info {
-            font-size: 7pt;
-            line-height: 1.1;
+            font-size: 8.5pt;
+            line-height: 1.2;
         }
 
         .document-title {
-            font-size: 16pt;
+            font-size: 20pt;
             font-weight: bold;
             text-align: right;
             vertical-align: middle;
         }
 
-        /* INFO SECTION (YTH & NOTA) */
+        /* INFO SECTION */
         .info-container {
             width: 100%;
-            margin-bottom: 15px;
+            margin-bottom: 25px;
             border-collapse: collapse;
         }
 
@@ -74,39 +65,39 @@
         .label-yth {
             font-weight: bold;
             text-decoration: underline;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             display: block;
-            font-size: 8.5pt;
+            font-size: 10pt;
         }
 
-        /* Sub-table untuk merapikan titik dua */
         .sub-info-table {
             width: 100%;
             border-collapse: collapse;
         }
 
         .sub-info-table td {
-            font-size: 8.5pt;
-            padding: 1px 0;
+            font-size: 10pt;
+            padding: 2px 0;
         }
 
         /* TABLE UTAMA */
         .main-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         .main-table th {
             border-top: 1px solid #000;
             border-bottom: 1px solid #000;
-            padding: 5px 4px;
-            font-size: 8.5pt;
+            padding: 10px 5px;
+            font-size: 10pt;
+            background-color: #fcfcfc;
         }
 
         .main-table td {
-            padding: 5px 4px;
-            font-size: 8.5pt;
+            padding: 10px 5px;
+            font-size: 10pt;
             vertical-align: top;
             border-bottom: 1px dotted #ccc;
         }
@@ -114,18 +105,18 @@
         /* SUMMARY */
         .summary-wrapper {
             width: 100%;
-            margin-top: 5px;
+            margin-top: 10px;
         }
 
         .summary-table {
             float: right;
-            width: 45%;
+            width: 40%;
             border-collapse: collapse;
         }
 
         .summary-table td {
-            padding: 3px 5px;
-            font-size: 9pt;
+            padding: 5px;
+            font-size: 11pt;
         }
 
         .border-total {
@@ -137,48 +128,46 @@
         .return-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 30px;
             border: 1px dashed #000;
         }
 
         .return-header-title {
             background-color: #f9f9f9;
-            padding: 4px 8px;
+            padding: 8px;
             font-weight: bold;
-            font-size: 8pt;
+            font-size: 9pt;
             border-bottom: 1px dashed #000;
             color: #c00;
         }
 
         .return-table th {
-            font-size: 8pt;
-            padding: 3px 4px;
+            font-size: 9pt;
+            padding: 5px;
             border-bottom: 1px solid #eee;
-            color: #555;
         }
 
         .return-table td {
-            font-size: 8pt;
-            padding: 3px 4px;
-            color: #444;
+            font-size: 9pt;
+            padding: 5px;
         }
 
         /* FOOTER SIGN */
         .footer-sign {
             width: 100%;
-            margin-top: 20px;
+            margin-top: 50px;
             border-collapse: collapse;
         }
 
         .footer-sign td {
             text-align: center;
             width: 33.3%;
-            font-size: 8.5pt;
+            font-size: 10pt;
             vertical-align: top;
         }
 
         .sign-space {
-            height: 45px;
+            height: 70px;
         }
 
         /* UTILS */
@@ -193,15 +182,14 @@
 
 <body>
 
-    <!-- Header Logo & Title -->
     <table class="header-table">
         <tr>
-            <td width="10%">
+            <td width="12%">
                 @if ($company && $company->logo)
                     <img src="{{ base_path('uploads/logo/' . basename($company->logo)) }}" class="logo-top">
                 @endif
             </td>
-            <td width="55%">
+            <td width="48%">
                 <h1 class="company-name">{{ $company->nama_cv ?? 'NAMA PERUSAHAAN' }}</h1>
                 <div class="company-info">
                     {{ $company->alamat ?? '-' }}<br>
@@ -215,15 +203,14 @@
         </tr>
     </table>
 
-    <!-- Info Pelanggan & Nota -->
     <table class="info-container">
         <tr>
             <td width="55%">
                 <span class="label-yth">KEPADA YTH:</span>
                 <table class="sub-info-table">
                     <tr>
-                        <td width="22%">Penerima</td>
-                        <td width="3%">:</td>
+                        <td width="25%">Penerima</td>
+                        <td width="5%">:</td>
                         <td class="bold uppercase">{{ $penjualan->client->nama ?? 'PELANGGAN UMUM' }}</td>
                     </tr>
                     <tr>
@@ -240,11 +227,11 @@
             </td>
 
             <td width="45%">
-                <div style="margin-left: 20px;">
+                <div style="margin-left: 30px;">
                     <span class="label-yth" style="text-decoration: none; color: transparent;">.</span>
                     <table class="sub-info-table">
                         <tr>
-                            <td width="35%">No. Nota</td>
+                            <td width="40%">No. Nota</td>
                             <td width="5%">:</td>
                             <td class="bold">{{ $type == 'sj' ? $penjualan->suratJalan->nomor ?? '-' : $penjualan->invoice->nomor ?? '-' }}</td>
                         </tr>
@@ -256,7 +243,7 @@
                         <tr>
                             <td>Status</td>
                             <td>:</td>
-                            <td class="uppercase bold" style="font-size: 7.5pt;">
+                            <td class="uppercase bold">
                                 {{ $penjualan->status == 'return' ? 'TERJADI RETURN' : ($type == 'sj' ? 'PENGIRIMAN' : 'LUNAS') }}
                             </td>
                         </tr>
@@ -266,15 +253,14 @@
         </tr>
     </table>
 
-    <!-- Tabel Barang Utama -->
     <table class="main-table">
         <thead>
             <tr>
                 <th width="5%" class="text-center">NO</th>
-                <th width="{{ $type == 'invoice' ? '45%' : '75%' }}" class="text-left">NAMA BARANG</th>
+                <th width="{{ $type == 'invoice' ? '40%' : '80%' }}" class="text-left">NAMA BARANG</th>
                 <th width="15%" class="text-center">QTY</th>
                 @if ($type == 'invoice')
-                    <th width="15%" class="text-right">HARGA</th>
+                    <th width="20%" class="text-right">HARGA</th>
                     <th width="20%" class="text-right">TOTAL</th>
                 @endif
             </tr>
@@ -300,13 +286,12 @@
         </tbody>
     </table>
 
-    <!-- Summary Invoice -->
     @if ($type == 'invoice')
         <div class="summary-wrapper clearfix">
             <table class="summary-table">
                 <tr>
                     <td class="bold text-right">TOTAL TAGIHAN:</td>
-                    <td class="bold text-right border-total" style="width: 50%;">
+                    <td class="bold text-right border-total">
                         Rp {{ number_format($totalOriginal, 0, ',', '.') }}
                     </td>
                 </tr>
@@ -316,7 +301,6 @@
 
     <div style="clear: both;"></div>
 
-    <!-- Section Return -->
     @php $hasReturn = $penjualan->detail->sum('qty_return') > 0; @endphp
     @if ($hasReturn)
         <table class="return-table">
@@ -328,10 +312,10 @@
                 </tr>
                 <tr>
                     <th width="5%" class="text-center">NO</th>
-                    <th width="{{ $type == 'invoice' ? '45%' : '75%' }}" class="text-left">NAMA BARANG</th>
+                    <th width="{{ $type == 'invoice' ? '40%' : '80%' }}" class="text-left">NAMA BARANG</th>
                     <th width="15%" class="text-center">QTY RTN</th>
                     @if($type == 'invoice')
-                        <th width="15%" class="text-right">HARGA</th>
+                        <th width="20%" class="text-right">HARGA</th>
                         <th width="20%" class="text-right">SUBTOTAL RTN</th>
                     @endif
                 </tr>
@@ -353,16 +337,15 @@
                 @endforeach
             </tbody>
         </table>
-        <div style="font-size: 7pt; margin-top: 3px; color: #666; font-style: italic;">
+        <div style="font-size: 8pt; margin-top: 5px; color: #666; font-style: italic;">
             * Saldo return akan dikompensasikan pada transaksi berikutnya.
         </div>
     @endif
 
-    <!-- Tanda Tangan -->
     <table class="footer-sign">
         <tr>
             <td>
-                 Admin,
+                Admin,
                 <div class="sign-space"></div>
                 ( {{ auth()->check() ? auth()->user()->name : '.................' }} )
             </td>
@@ -381,8 +364,7 @@
         </tr>
     </table>
 
-    <!-- Footer Note -->
-    <div style="margin-top: 15px; font-size: 7pt; font-style: italic; border-top: 1px solid #000; padding-top: 5px;">
+    <div style="margin-top: 40px; font-size: 8.5pt; font-style: italic; border-top: 1px solid #000; padding-top: 10px;">
         * Cetakan komputer, sah tanpa tanda tangan basah jika ada stempel resmi.<br>
         * {{ $type == 'sj' ? 'Harap periksa barang saat diterima.' : 'Barang yang sudah dibeli tidak dapat dikembalikan kecuali ada perjanjian.' }}
     </div>

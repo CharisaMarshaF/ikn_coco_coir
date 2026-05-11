@@ -3,47 +3,57 @@
 <head>
     <title>Invoice Pembelian - {{ $pembelian->id }}</title>
     <style>
+        /* Pengaturan Ukuran Kertas A4 Portrait */
         @page { 
-            size: 210mm 148mm; 
-            margin: 10mm; 
+            size: A4 portrait; 
+            margin: 15mm; 
         }
         
         body { 
             font-family: 'Courier', monospace; 
-            font-size: 9pt; 
+            font-size: 10pt; 
             margin: 0; 
             padding: 0;
             color: #000;
-            line-height: 1.1;
+            line-height: 1.2;
         }
 
-        .header-table { width: 100%; border-bottom: 2px double #000; margin-bottom: 8px; padding-bottom: 5px; }
-        .logo-top { width: 50px; height: auto; }
-        .company-name { font-size: 12pt; font-weight: bold; text-transform: uppercase; margin: 0; }
-        .company-info { font-size: 7pt; }
-        .document-title { font-size: 16pt; font-weight: bold; text-align: right; }
+        .header-table { width: 100%; border-bottom: 2px double #000; margin-bottom: 15px; padding-bottom: 10px; }
+        .logo-top { width: 60px; height: auto; }
+        .company-name { font-size: 14pt; font-weight: bold; text-transform: uppercase; margin: 0; }
+        .company-info { font-size: 8pt; }
+        .document-title { font-size: 18pt; font-weight: bold; text-align: right; }
         
-        .info-table { width: 100%; margin-bottom: 8px; }
-        .info-table td { vertical-align: top; font-size: 8pt; }
-        .label-box { font-weight: bold; text-decoration: underline; margin-bottom: 3px; display: block; }
+        .info-table { width: 100%; margin-bottom: 20px; }
+        .info-table td { vertical-align: top; font-size: 9pt; }
+        .label-box { font-weight: bold; text-decoration: underline; margin-bottom: 5px; display: block; }
         
         .nota-info-table { width: 100%; border-spacing: 0; }
-        .nota-info-table td { padding: 1px 0; }
+        .nota-info-table td { padding: 2px 0; }
 
-        .main-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .main-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         .main-table th { 
             border-top: 1px solid #000;
             border-bottom: 1px solid #000;
-            padding: 4px; 
-            font-size: 8pt;
+            padding: 8px 5px; 
+            font-size: 9pt;
         }
-        .main-table td { padding: 4px; font-size: 8pt; vertical-align: top; border-bottom: 1px dotted #ccc; }
+        .main-table td { 
+            padding: 8px 5px; 
+            font-size: 9pt; 
+            vertical-align: top; 
+            border-bottom: 1px dotted #ccc; 
+        }
 
-        .summary-container { float: right; width: 45%; margin-top: 5px; }
+        .summary-container { float: right; width: 45%; margin-top: 10px; }
         .summary-table { width: 100%; border-collapse: collapse; }
-        .summary-table td { padding: 2px 5px; font-size: 9pt; }
+        .summary-table td { padding: 4px 5px; font-size: 10pt; }
         .border-total { border-top: 1px solid #000; border-bottom: 1px solid #000; }
         
+        /* Area Tanda Tangan Tetap Style Minimalis */
+        .signature-section { width: 100%; margin-top: 50px; }
+        .sig-box { float: left; width: 30%; text-align: center; font-size: 9pt; }
+
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .text-left { text-align: left; }
@@ -55,12 +65,12 @@
     
     <table class="header-table">
         <tr>
-            <td width="10%">
+            <td width="12%">
                 @if($konfigurasi && $konfigurasi->logo)
                 <img src="{{ base_path('uploads/logo/' . basename($konfigurasi->logo)) }}" class="logo-top">
                 @endif
             </td>
-            <td width="50%">
+            <td width="48%">
                 <h1 class="company-name">{{ $konfigurasi->nama_cv ?? 'NAMA PERUSAHAAN' }}</h1>
                 <div class="company-info">
                     {{ $konfigurasi->alamat ?? '-' }}<br>
@@ -144,7 +154,7 @@
         <table class="summary-table">
             <tr>
                 <td class="bold text-right">TOTAL PEMBELIAN:</td>
-                <td class="bold text-right border-total" style="width: 50%;">
+                <td class="bold text-right border-total" style="width: 55%;">
                     Rp {{ number_format($pembelian->total, 0, ',', '.') }}
                 </td>
             </tr>
@@ -154,15 +164,28 @@
     <div style="clear: both;"></div>
 
     @if($pembelian->keterangan)
-    <div style="margin-top: 10px; font-size: 8pt;">
+    <div style="margin-top: 15px; font-size: 9pt;">
         <span class="bold">Keterangan:</span><br>
         <i>{{ $pembelian->keterangan }}</i>
     </div>
     @endif
 
-    <div style="margin-top: 20px; font-size: 7pt; font-style: italic; border-top: 1px solid #eee; padding-top: 5px;">
+    <div class="signature-section">
+        <div class="sig-box">
+            Diterima Oleh,<br><br><br><br><br>
+            ( .................... )
+        </div>
+        <div class="sig-box" style="float: right;">
+            Hormat Kami,<br><br><br><br><br>
+            ( {{ $pembelian->supplier->nama }} )
+        </div>
+    </div>
+
+    <div style="clear: both;"></div>
+
+    <div style="margin-top: 50px; font-size: 8pt; font-style: italic; border-top: 1px solid #eee; padding-top: 10px;">
         * Dokumen ini merupakan bukti sah pembelian bahan baku.<br>
-        * Dicetak secara otomatis oleh sistem pada {{ date('d/m/Y') }}.
+        * Dicetak secara otomatis oleh sistem pada {{ date('d/m/Y H:i') }}.
     </div>
 </body>
 </html>

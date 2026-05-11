@@ -9,7 +9,7 @@
                 <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Laporan PDF
             </a>
         </div>
-
+        
         <div class="intro-y col-span-12 p-5 bg-white rounded-lg shadow">
             <div class="overflow-x-auto">
                 <table id="example1" class="table table-report table-report--bordered display datatable w-full">
@@ -57,39 +57,51 @@
             </div>
         </div>
     </div>
-        {{-- Modal Laporan PDF --}}
-        <div id="modal-laporan-hasil-produksi" class="modal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    {{-- Form diarahkan ke method cetakPembelian di Controller --}}
-                    {{-- Ganti baris ini --}}
-                    <form action="{{ route('hasil-produksi.cetak') }}" method="GET" target="_blank">
-                        <div class="modal-header">
-                            <h2 class="font-medium text-base mr-auto">Filter Laporan Hasil Produksi</h2>
+    {{-- Modal Laporan PDF --}}
+    <div id="modal-laporan-hasil-produksi" class="modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('hasil-produksi.cetak') }}" method="GET" target="_blank">
+                    <div class="modal-header">
+                        <h2 class="font-medium text-base mr-auto">Filter Laporan Hasil Produksi</h2>
+                    </div>
+                    <div class="modal-body grid grid-cols-12 gap-4 gap-y-3">
+                        <div class="col-span-12">
+                            <label class="form-label">Dari Tanggal</label>
+                            <input type="date" name="start_date" class="form-control"
+                                value="{{ \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') }}" required>
                         </div>
-                        <div class="modal-body grid grid-cols-12 gap-4 gap-y-3">
-                            <div class="col-span-12">
-                                <label class="form-label">Dari Tanggal</label>
-                                <input type="date" name="start_date" class="form-control" {{-- Mengatur ke tanggal 1 bulan berjalan --}}
-                                    value="{{ \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') }}" required>
-                            </div>
-                            <div class="col-span-12">
-                                <label class="form-label">Sampai Tanggal</label>
-                                <input type="date" name="end_date" class="form-control" {{-- Mengatur ke tanggal terakhir bulan berjalan --}}
-                                    value="{{ \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') }}" required>
-                            </div>
+                        <div class="col-span-12">
+                            <label class="form-label">Sampai Tanggal</label>
+                            <input type="date" name="end_date" class="form-control"
+                                value="{{ \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') }}" required>
                         </div>
-                        <div class="modal-footer text-right">
-                            <button type="button" data-tw-dismiss="modal"
-                                class="btn btn-outline-secondary w-20 mr-1">Batal</button>
-                            <button type="submit" class="btn btn-primary w-32">
-                                <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak PDF
-                            </button>
-                        </div>
-                    </form>
-                </div>
+
+                        {{-- Produk Wajib Diisi --}}
+                        <div class="col-span-12">
+    <label class="form-label">Pilih Produk <span class="text-danger">*</span></label>
+    <select name="produk_id" class="tom-select w-full" required>
+        @php $products = \App\Models\Produk::orderBy('nama', 'asc')->get(); @endphp
+        @foreach ($products as $index => $p)
+            {{-- Produk pertama otomatis diberi atribut 'selected' --}}
+            <option value="{{ $p->id }}" {{ $index == 0 ? 'selected' : '' }}>
+                {{ $p->nama }}
+            </option>
+        @endforeach
+    </select>
+</div>
+                    </div>
+                    <div class="modal-footer text-right">
+                        <button type="button" data-tw-dismiss="modal"
+                            class="btn btn-outline-secondary w-20 mr-1">Batal</button>
+                        <button type="submit" class="btn btn-primary w-32">
+                            <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak PDF
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
     {{-- Modal Section --}}
     @foreach ($hasilProduksi as $h)
         {{-- Modal Delete (Desain disamakan persis dengan Bahan Baku) --}}
@@ -119,9 +131,18 @@
                 </div>
             </div>
         </div>
-
     @endforeach
-
+        <script>
+            document.getElementById('form-laporan').addEventListener('submit', function(e) {
+    const produkId = this.querySelector('[name="produk_id"]').value;
+    
+    if (!produkId || produkId === "") {
+        e.preventDefault(); // Batalkan kirim form
+        alert("Silakan pilih produk terlebih dahulu!");
+        return false;
+    }
+});
+        </script>
     <!-- Script untuk Notifikasi Sukses (Tetap pakai SweetAlert agar elegan saat berhasil) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
