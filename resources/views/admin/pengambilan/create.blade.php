@@ -40,12 +40,8 @@
 
                      <div>
                         <label class="form-label font-medium">Keterangan</label>
-                        <input type="text" name="keterangan" class="form-control" placeholder="Opsional..." required>
+                        <input type="text" name="keterangan" class="form-control" placeholder="Masukkan keterangan ..." required>
                     </div>
-
-                    
-
-
                     <div class="pt-4">
                         <button type="submit" class="btn btn-primary w-full shadow-md py-3">
                             <i data-lucide="save" class="w-4 h-4 mr-2"></i> Simpan Pengambilan

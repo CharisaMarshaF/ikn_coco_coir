@@ -20,7 +20,7 @@
 
         .header-table { width: 100%; border-bottom: 2px double #000; margin-bottom: 15px; padding-bottom: 10px; }
         .logo-top { width: 60px; height: auto; }
-        .company-name { font-size: 14pt; font-weight: bold; text-transform: uppercase; margin: 0; }
+        .company-name { font-size: 12pt; font-weight: bold; text-transform: uppercase; margin: 0; }
         .company-info { font-size: 8pt; }
         .document-title { font-size: 18pt; font-weight: bold; text-align: right; }
         
@@ -71,11 +71,11 @@
                 @endif
             </td>
             <td width="48%">
-                <h1 class="company-name">{{ $konfigurasi->nama_cv ?? 'NAMA PERUSAHAAN' }}</h1>
+                <h1 class="company-name">{{ $konfigurasi->nama_cv ?? 'PT INTER KARANGANYAR NUSANTARA' }}</h1>
                 <div class="company-info">
                     {{ $konfigurasi->alamat ?? '-' }}<br>
-                    Telp: {{ $konfigurasi->telepon ?? '-' }} {{ $konfigurasi->email ? ' | Email: ' . $konfigurasi->email : '' }}<br>
-                    {{ $konfigurasi->website }}
+                    Telp: {{ $konfigurasi->telepon ?? '-' }} | {{ $konfigurasi->email ?? '-' }}<br>
+                    {{ $konfigurasi->website ?? '-' }}
                 </div>
             </td>
             <td class="document-title">
@@ -153,7 +153,7 @@
     <div class="summary-container">
         <table class="summary-table">
             <tr>
-                <td class="bold text-right">TOTAL PEMBELIAN:</td>
+                <td class="bold text-right">TOTAL :</td>
                 <td class="bold text-right border-total" style="width: 55%;">
                     Rp {{ number_format($pembelian->total, 0, ',', '.') }}
                 </td>
@@ -185,7 +185,7 @@
 
     <div style="margin-top: 50px; font-size: 8pt; font-style: italic; border-top: 1px solid #eee; padding-top: 10px;">
         * Dokumen ini merupakan bukti sah pembelian bahan baku.<br>
-        * Dicetak secara otomatis oleh sistem pada {{ date('d/m/Y H:i') }}.
+        * Dicetak secara otomatis oleh sistem pada {{ date('d/m/Y') }}.
     </div>
 </body>
 </html>

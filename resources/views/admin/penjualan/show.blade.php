@@ -112,36 +112,43 @@
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th class="whitespace-nowrap">Nama Produk</th>
-                                <th class="text-center whitespace-nowrap">Qty Awal</th>
-                                <th class="text-center whitespace-nowrap">Qty Return</th>
-                                <th class="text-center whitespace-nowrap">Qty Netto</th>
-                                <th class="text-right whitespace-nowrap">Harga</th>
-                                <th class="text-right whitespace-nowrap">Subtotal</th>
+                                <th width="25%" class="whitespace-nowrap">Nama Produk</th>
+                                <th width="5%" class="text-center whitespace-nowrap">Qty Awal</th>
+                                <th width="10%" class="text-center whitespace-nowrap">Qty Return</th>
+                                <th width="10%" class="text-center whitespace-nowrap">Qty Netto</th>
+                                <th width="25%" class="text-right whitespace-nowrap">Harga</th>
+                                <th width="35%" class="text-right whitespace-nowrap">Subtotal</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($penjualan->detail as $item)
                                 <tr>
-                                    <td>{{ $item->produk->nama }}</td>
-                                    <td class="text-center">{{ $item->qty + 0 }}</td> {{-- Qty Awal Beli --}}
-                                    <td class="text-center text-danger">
+                                    <td width="25%">{{ $item->produk->nama }}</td>
+                                    <td width="5%" class="text-center">{{ $item->qty + 0 }}</td> {{-- Qty Awal Beli --}}
+                                    <td width="10%" class="text-center text-danger">
                                         {{ $item->qty_return > 0 ? '-' . ($item->qty_return + 0) : '0' }}
                                     </td>
-                                    <td class="text-center font-bold text-lg">
+                                    <td width="10%" class="text-center font-bold text-lg">
                                         {{ $item->qty - $item->qty_return + 0 }} {{-- Sisa yang masih di tangan pembeli --}}
                                     </td>
-                                    <td class="text-right">Rp {{ number_format($item->harga, 0, ',', '.') }}</td>
-                                    <td class="text-right font-medium">Rp {{ number_format($item->subtotal, 0, ',', '.') }}
+                                    <td width="25%" class="text-right">Rp {{ number_format($item->harga, 0, ',', '.') }}
+                                    </td>
+                                    <td width="35%" class="text-right font-medium">Rp
+                                        {{ number_format($item->subtotal, 0, ',', '.') }}
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                         <tfoot>
-                            <tr class="bg-slate-50">
-                                <td colspan="5" class="text-right font-bold uppercase">Total Tagihan Akhir</td>
-                                <td class="text-right font-bold text-primary text-lg">Rp
-                                    {{ number_format($penjualan->total, 0, ',', '.') }}</td>
+                            <tr class="bg-slate-100"> {{-- Mengganti background agar lebih kontras --}}
+                                <td colspan="5" class="text-right font-bold uppercase py-4"
+                                    style="vertical-align: middle; font-size: 1rem;">
+                                    Total Tagihan Akhir
+                                </td>
+                                <td class="text-right font-bold text-primary py-4"
+                                    style="font-size: 1rem; min-width: 120px;">
+                                    Rp {{ number_format($penjualan->total, 0, ',', '.') }}
+                                </td>
                             </tr>
                         </tfoot>
                     </table>
@@ -173,13 +180,13 @@
                                             <a href="{{ route('penjualan.show_return', $ret->id) }}"
                                                 class="font-bold text-primary underline decoration-dotted">
                                                 {{ $ret->nomor_return }}
-                                            </a>
+                                            </a><br>
+                                            <span class="text-slate-500 text-xs uppercase font-semibold">Tanggal
+                                                Return:</span> {{ \Carbon\Carbon::parse($ret->tanggal)->format('d F Y') }}
+                                            
                                         </div>
                                         <div class="text-right">
-                                            <span class="text-slate-500 text-xs uppercase font-semibold">Tanggal
-                                                Return:</span>
-                                            <div class="font-medium">
-                                                {{ \Carbon\Carbon::parse($ret->tanggal)->format('d F Y') }}</div>
+
                                         </div>
                                     </div>
 

@@ -32,7 +32,7 @@
         }
 
         .company-name {
-            font-size: 14pt;
+            font-size: 12pt;
             font-weight: bold;
             text-transform: uppercase;
             margin: 0;
@@ -190,11 +190,11 @@
                 @endif
             </td>
             <td width="48%">
-                <h1 class="company-name">{{ $company->nama_cv ?? 'NAMA PERUSAHAAN' }}</h1>
+                <h1 class="company-name">{{ $company->nama_cv ?? 'PT INTER KARANGANYAR NUSANTARA' }}</h1>
                 <div class="company-info">
                     {{ $company->alamat ?? '-' }}<br>
-                    Telp: {{ $company->telepon ?? '-' }} {{ $company->email ? ' | Email: ' . $company->email : '' }}<br>
-                    {{ $company->website }}
+                    Telp: {{ $company->telepon ?? '-' }} {{ $company?->email ? ' | Email: ' . $company->email : '' }}<br>
+                    {{ $company->website ?? '-' }}
                 </div>
             </td>
             <td class="document-title">
