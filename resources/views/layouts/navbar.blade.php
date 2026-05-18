@@ -22,16 +22,16 @@
 
                             <li>
                                 <a href="javascript:;"
-                                    class="menu {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*','kategori-kas.*') ? 'menu--active' : '' }}">
+                                    class="menu {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'kategori-kas.*') ? 'menu--active' : '' }}">
                                     <div class="menu__icon"> <i data-lucide="database"></i> </div>
                                     <div class="menu__title">
                                         Master Data
                                         <i data-lucide="chevron-down"
-                                            class="menu__sub-icon {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*','kategori-kas.*') ? 'transform rotate-180' : '' }}"></i>
+                                            class="menu__sub-icon {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'kategori-kas.*') ? 'transform rotate-180' : '' }}"></i>
                                     </div>
                                 </a>
                                 <ul
-                                    class="{{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*','kategori-kas.*') ? 'menu__sub-open' : '' }}">
+                                    class="{{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'kategori-kas.*') ? 'menu__sub-open' : '' }}">
                                     <li>
                                         <a href="{{ route('users.index') }}"
                                             class="menu {{ request()->routeIs('users.*') ? 'menu--active' : '' }}">
@@ -95,13 +95,19 @@
                                             <div class="menu__title"> Rekening </div>
                                         </a>
                                     </li>
-                                    <li>
-                                        <a href="{{ route('kas.index') }}"
-                                            class="menu {{ request()->routeIs('kas.*') ? 'menu--active' : '' }}">
-                                            <div class="menu__icon"> <i data-lucide="calendar"></i> </div>
-                                            <div class="menu__title"> Kas Harian </div>
-                                        </a>
-                                    </li>
+                                    
+                                    @foreach ($sideBarRekening as $rek)
+                                        <li>
+                                            <a href="{{ route('kas.index', ['rekening_id' => $rek->id]) }}"
+                                                class="menu {{ request('rekening_id') == $rek->id ? 'menu--active' : '' }}">
+                                                <div class="menu__icon">
+                                                    <i data-lucide="wallet"></i>
+                                                </div>
+                                                <div class="menu__title">
+                                                    {{ $rek->nama }} </div>
+                                            </a>
+                                        </li>
+                                    @endforeach
                                 </ul>
                             </li>
 
@@ -193,19 +199,19 @@
                             <li>
                                 <!-- Menu Utama Master Data -->
                                 <a href="javascript:;"
-                                    class="side-menu {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*','kategori-kas.*') ? 'side-menu--active' : '' }}">
+                                    class="side-menu {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*', 'kategori-kas.*') ? 'side-menu--active' : '' }}">
                                     <div class="side-menu__icon"> <i data-lucide="database"></i> </div>
                                     <div class="side-menu__title">
                                         Master Data
                                         <div
-                                            class="side-menu__sub-icon {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*','kategori-kas.*') ? 'transform rotate-180' : '' }}">
+                                            class="side-menu__sub-icon {{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*', 'kategori-kas.*') ? 'transform rotate-180' : '' }}">
                                             <i data-lucide="chevron-down"></i>
                                         </div>
                                     </div>
                                 </a>
 
                                 <ul
-                                    class="{{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*','kategori-kas.*') ? 'side-menu__sub-open' : '' }}">
+                                    class="{{ request()->routeIs('users.*', 'supplier.*', 'bahan-baku.*', 'produk.*', 'client.*', 'konfigurasi.*', 'stock-log.*', 'kategori-kas.*') ? 'side-menu__sub-open' : '' }}">
                                     <!-- Submenu User -->
                                     <li>
                                         <a href="{{ route('users.index') }}"
@@ -261,7 +267,7 @@
                                             <div class="side-menu__title"> Konfigurasi </div>
                                         </a>
                                     </li>
-                                     <li>
+                                    <li>
                                         <a href="{{ route('kategori-kas.index') }}"
                                             class="side-menu {{ request()->routeIs('kategori-kas.*') ? 'side-menu--active' : '' }}">
                                             <div class="side-menu__icon"> <i data-lucide="tag"></i> </div>
@@ -292,13 +298,18 @@
                                             <div class="side-menu__title"> Rekening </div>
                                         </a>
                                     </li>
-                                    <li>
-                                        <a href="{{ route('kas.index') }}"
-                                            class="side-menu {{ request()->is('keuangan/kas*') ? 'side-menu--active' : '' }}">
-                                            <div class="side-menu__icon"> <i data-lucide="calendar"></i> </div>
-                                            <div class="side-menu__title"> Kas Harian</div>
-                                        </a>
-                                    </li>
+                                    @foreach ($sideBarRekening as $rek)
+                                        <li>
+                                            <a href="{{ route('kas.index', ['rekening_id' => $rek->id]) }}"
+                                                class="side-menu {{ request('rekening_id') == $rek->id ? 'side-menu--active' : '' }}">
+                                                <div class="side-menu__icon">
+                                                    <i data-lucide="wallet"></i>
+                                                </div>
+                                                <div class="side-menu__title">
+                                                    {{ $rek->nama }} </div>
+                                            </a>
+                                        </li>
+                                    @endforeach
                                 </ul>
                             </li>
 

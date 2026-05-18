@@ -17,8 +17,10 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot()
     {
-        //
+        view()->composer('*', function ($view) {
+            $view->with('sideBarRekening', \App\Models\Rekening::orderBy('nama', 'asc')->get());
+        });
     }
 }

@@ -58,7 +58,7 @@
         <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
             <form action="{{ route('kas.index') }}" method="GET" id="filterForm"
                 class="flex flex-wrap items-center gap-3">
-                <div class="flex items-center gap-2">
+                {{-- <div class="flex items-center gap-2">
                     <label class="whitespace-nowrap">Rekening:</label>
                     <select name="rekening_id" id="rekening_select_filter" class="form-control box"
                         onchange="updatePdfLink()">
@@ -68,7 +68,8 @@
                                 {{ $rek->nama }}</option>
                         @endforeach
                     </select>
-                </div>
+                </div> --}}
+                <input type="hidden" name="rekening_id" value="{{ request('rekening_id') }}">
                 <div class="flex items-center gap-2">
                     <label class="whitespace-nowrap">Dari:</label>
                     <input type="date" name="tgl_mulai" id="filter_tgl_mulai" class="form-control box"
@@ -93,24 +94,24 @@
                 <table id="example1" class="table table-report table-report--bordered display w-full">
                     <thead>
                         <tr>
-                            <th class="whitespace-nowrap w-10 text-center">NO</th>
-                            <th class="whitespace-nowrap">WAKTU</th>
-                            <th class="whitespace-nowrap">REKENING</th>
-                            <th class="whitespace-nowrap">KETERANGAN</th>
-                            <th class="text-center whitespace-nowrap">JENIS</th>
-                            <th class="text-right whitespace-nowrap">NOMINAL</th>
-                            <th class="text-center whitespace-nowrap">AKSI</th>
+                            <th width="5%" class="whitespace-nowrap w-10 text-center">NO</th>
+                            <th width="15%" class="whitespace-nowrap">WAKTU</th>
+                            <th width="20%" class="whitespace-nowrap">REKENING</th>
+                            <th width="25%" class="whitespace-nowrap">KETERANGAN</th>
+                            <th width="10%" class="text-center whitespace-nowrap">JENIS</th>
+                            <th width="15%" class="text-right whitespace-nowrap">NOMINAL</th>
+                            <th width="15%" class="text-center whitespace-nowrap">AKSI</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($kas as $key => $k)
                             <tr class="intro-x">
-                                <td class="text-center">{{ $key + 1 }}</td>
-                                <td class="w-40">{{ \Carbon\Carbon::parse($k->tanggal)->format('d/m/Y') }}</td>
-                                <td>
+                                <td width="5%" class="text-center">{{ $key + 1 }}</td>
+                                <td width="15%" class="w-40">{{ \Carbon\Carbon::parse($k->tanggal)->format('d/m/Y') }}</td>
+                                <td width="20%">
                                     <div class="font-medium whitespace-nowrap">{{ $k->rekening->nama ?? 'N/A' }}</div>
                                 </td>
-                                <td>
+                                <td width="25%">
                                     <div class="flex items-center">
                                         <div>
                                             <span
@@ -120,18 +121,18 @@
 
                                     </div>
                                 </td>
-                                <td class="text-center">
+                                <td width="10%" class="text-center">
                                     <span
                                         class="{{ $k->jenis == 'masuk' ? 'text-success' : 'text-danger' }} font-medium uppercase italic">
                                         Uang {{ $k->jenis }}
                                     </span>
                                 </td>
-                                <td
+                                <td width="15%"
                                     class="text-right font-bold {{ $k->jenis == 'masuk' ? 'text-success' : 'text-danger' }}">
                                     {{ $k->jenis == 'masuk' ? '+' : '-' }} Rp
                                     {{ number_format($k->total_nominal, 0, ',', '.') }}
                                 </td>
-                                <td class="table-report__action w-56">
+                                <td width="15%" class="table-report__action w-56">
                                     <!-- Menggunakan justify-center agar posisi tombol selalu di tengah cell -->
                                     <div class="flex justify-left items-center gap-3">
 
@@ -166,12 +167,12 @@
     {{-- MODAL SECTION - Diletakkan di luar table loop agar tidak rusak strukturnya --}}
     @foreach ($kas as $k)
         {{-- Modal Detail --}}
-        @if ($k->kategori == 'operasional' && $k->details)
+        @if ($k->kategori == 'operasional' && $k->details) 
             <div id="modal-detail-{{ $k->id }}" class="modal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h2 class="font-medium text-base mr-auto">Detail Item Operasional</h2>
+                            <h2 class="font-medium text-base mr-auto">Detail Item Operasional - {{ $k->kategoriKas->nama ?? 'Tanpa Kategori' }} </h2>
                             <button data-tw-dismiss="modal"><i data-lucide="x" class="w-4 h-4"></i></button>
                         </div>
                         <div class="modal-body">
@@ -251,7 +252,16 @@
                         <h2 class="font-medium text-base mr-auto">Input Kas Manual</h2>
                     </div>
                     <div class="modal-body grid grid-cols-12 gap-4 gap-y-3">
-                        <div class="col-span-12 ">
+                        {{-- AUTOMATISASI: Langsung kirim ID rekening aktif tanpa pilih lagi --}}
+                    <input type="hidden" name="rekening_id" value="{{ request('rekening_id') }}">
+
+                    <div class="col-span-12">
+                        <div class="alert alert-outline-secondary flex items-center mb-2" role="alert">
+                            <i data-lucide="info" class="w-6 h-6 mr-2"></i> 
+                            Transaksi ini akan otomatis dicatat pada rekening - <strong>{{  $title }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-span-12 ">
                         <label class="form-label">Pilih Kategori Kas</label>
                         <select name="kategori_kas_id" class="form-select" required>
                             <option value="">-- Pilih Kategori --</option>
@@ -260,7 +270,7 @@
                             @endforeach
                         </select>
                     </div>
-                        <div class="col-span-12">
+                        {{-- <div class="col-span-12">
                             <label class="form-label">Pilih Rekening</label>
                             <select name="rekening_id" class="form-select" required>
                                 <option value="">-- Pilih Rekening --</option>
@@ -269,7 +279,7 @@
                                         {{ number_format($rek->saldo, 0, ',', '.') }})</option>
                                 @endforeach
                             </select>
-                        </div>
+                        </div> --}}
                         <div class="col-span-12 sm:col-span-6">
                             <label class="form-label">Tanggal</label>
                             <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}"

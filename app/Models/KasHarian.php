@@ -4,11 +4,11 @@ namespace App\Models;
 
 use App\Models\KasDetail;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory; // 1. Tambahkan ini
 class KasHarian extends Model
 {
     protected $table = 'kas_harian';
-
+use HasFactory; // 2. Tambahkan ini di dalam class
     protected $casts = [
         'tanggal' => 'date',
     ];
